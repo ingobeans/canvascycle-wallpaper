@@ -154,7 +154,7 @@ async fn main() {
             let next_offset_clamped = cycle_length - (offset + 1) % cycle_length;
 
             let color_index = cycle.low + offset_clamped;
-            let mut color = &data.colors[color_index as usize];
+            let color = &data.colors[color_index as usize];
 
             let next_color_index = cycle.low + next_offset_clamped;
             let next_color = &data.colors[next_color_index as usize];
