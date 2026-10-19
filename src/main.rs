@@ -59,23 +59,36 @@ async fn main() {
     // which in turn would make sure it has an assigned value
     let mut texture = unsafe { MaybeUninit::uninit().assume_init() };
 
-    let mut color_index = 0;
+    let mut cycle_offsets = Vec::new();
+    for _ in &data.cycles {
+        cycle_offsets.push(0);
+    }
+
     let mut frame_counter = 0;
     loop {
         if frame_counter == 0 {
-            color_index += 1;
+            for (index, cycle_offset) in cycle_offsets.iter_mut().enumerate() {
+                let cycle_length = data.cycles[index].high - data.cycles[index].low;
+                if cycle_length == 0 {
+                    continue;
+                }
+
+                *cycle_offset = (*cycle_offset + 1) % cycle_length;
+            }
             frame_counter = 10;
             let mut image_data = Vec::with_capacity(data.width as usize * data.height as usize * 4);
             for pixel in &data.pixels {
                 let mut pixel = *pixel;
-                for cycle in &data.cycles {
+                for (index, cycle) in data.cycles.iter().enumerate() {
                     if cycle.high == cycle.low {
                         continue;
                     }
                     if pixel >= cycle.low && pixel <= cycle.high {
+                        let color_offset = cycle_offsets[index];
+
                         // this got kinda overcomplicated but works ig :thumbsup:
                         let base_offset = (cycle.high - cycle.low) - (pixel - cycle.low);
-                        let offset = base_offset + color_index;
+                        let offset = base_offset + color_offset;
                         let clamped_offset =
                             (cycle.high - cycle.low) - offset % (cycle.high - cycle.low);
                         pixel = cycle.low + clamped_offset;
