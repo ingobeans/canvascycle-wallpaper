@@ -128,6 +128,7 @@ async fn main() {
     texture.set_filter(FilterMode::Nearest);
 
     let interval_time = 0.1;
+    let mut fullscreen = false;
     loop {
         for (index, cycle_offset) in cycle_offsets.iter_mut().enumerate() {
             let cycle_length = data.cycles[index].high - data.cycles[index].low;
@@ -187,6 +188,10 @@ async fn main() {
                 ..Default::default()
             },
         );
+        if is_key_pressed(KeyCode::F11) {
+            fullscreen = !fullscreen;
+            set_fullscreen(fullscreen);
+        }
         next_frame().await;
     }
 }
