@@ -1,0 +1,8 @@
+[package]
+name = "canvascycle-wallpaper"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+regex = "1.13.1"
+#macroquad = "0.4.16"
