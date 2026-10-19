@@ -1,4 +1,7 @@
-#![cfg_attr(all(target_os = "windows"), windows_subsystem = "windows")]
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions),),
+    windows_subsystem = "windows"
+)]
 
 use std::{
     collections::{HashMap, hash_map::Entry},
@@ -8,6 +11,9 @@ use std::{
 use macroquad::{miniquad::window::screen_size, prelude::*};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+
+#[cfg(windows)]
+mod windows;
 
 #[derive(Serialize, Deserialize)]
 struct PixelRgb {
@@ -67,13 +73,25 @@ fn window() -> Conf {
 
 #[macroquad::main(window)]
 async fn main() {
-    let arg = std::env::args().nth(1);
+    let mut args = std::env::args().skip(1);
+    let arg = args.next();
     let text = if let Some(arg) = arg {
         std::fs::read_to_string(arg.as_str())
     } else {
         std::fs::read_to_string("data/images/TESTRAMP.LBM.json")
     };
     let text = text.unwrap();
+
+    #[cfg(windows)]
+    {
+        let wallpaper = args
+            .next()
+            .is_some_and(|a| a.as_str() == "-w" || a.as_str() == "--wallpaper");
+        if wallpaper && let Some(hwnd) = windows::find_miniquad_window() {
+            println!("hwnd found!");
+            windows::style_window_as_wallpaper(hwnd);
+        }
+    }
 
     let pattern = Regex::new(r"([a-z]*):").unwrap();
 

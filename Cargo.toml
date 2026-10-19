@@ -1,6 +1,6 @@
 [package]
 name = "canvascycle-wallpaper"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2024"
 
 [dependencies]
@@ -9,3 +9,6 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 macroquad = "0.4.16"
 image = "0.24.9"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3.9", features = ["dwmapi", "winuser"] }
