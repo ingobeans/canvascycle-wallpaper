@@ -3,7 +3,7 @@ use std::{
     hash::Hash,
 };
 
-use macroquad::prelude::*;
+use macroquad::{miniquad::window::screen_size, prelude::*};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -47,7 +47,16 @@ impl Hash for ChangingPixel {
     }
 }
 
-#[macroquad::main("my cool canvascycler :3")]
+fn window() -> Conf {
+    Conf {
+        window_title: "my cool canvascycler :3".to_string(),
+        window_width: 640,
+        window_height: 480,
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window)]
 async fn main() {
     let arg = std::env::args().nth(1);
     let text = if let Some(arg) = arg {
@@ -148,7 +157,25 @@ async fn main() {
         } else {
             frame_counter -= 1;
         }
-        draw_texture(&texture, 0.0, 0.0, WHITE);
+        let (width, height) = screen_size();
+        let screen_aspect = width / height;
+        let aspect = data.width as f32 / data.height as f32;
+        let rect = if screen_aspect < aspect {
+            Vec2::new(width, width / aspect)
+        } else {
+            Vec2::new(height * aspect, height)
+        };
+
+        draw_texture_ex(
+            &texture,
+            0.0,
+            0.0,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(rect),
+                ..Default::default()
+            },
+        );
         next_frame().await;
     }
 }
