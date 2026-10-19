@@ -1,3 +1,5 @@
+use std::mem::MaybeUninit;
+
 use macroquad::prelude::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -47,22 +49,48 @@ async fn main() {
     let data: Result<CanvasCycleImage, serde_json::Error> = serde_json::from_str(&text);
     let data = data.unwrap();
 
-    let mut image_data = Vec::with_capacity(data.width as usize * data.height as usize * 4);
-    for pixel in &data.pixels {
-        let c = &data.colors[*pixel as usize];
-        image_data.push(c.r);
-        image_data.push(c.g);
-        image_data.push(c.b);
-        image_data.push(255); // alpha
-    }
-    let image = Image {
-        width: data.width,
-        height: data.height,
-        bytes: image_data,
-    };
-    let texture = Texture2D::from_image(&image);
+    #[allow(invalid_value)]
+    let mut texture = unsafe { MaybeUninit::uninit().assume_init() };
 
+    let mut color_index = 0;
+    let mut frame_counter = 0;
     loop {
+        if frame_counter == 0 {
+            color_index += 1;
+            frame_counter = 10;
+            let mut image_data = Vec::with_capacity(data.width as usize * data.height as usize * 4);
+            for pixel in &data.pixels {
+                let mut pixel = *pixel;
+                for cycle in &data.cycles {
+                    if cycle.high == cycle.low {
+                        continue;
+                    }
+                    if pixel >= cycle.low && pixel <= cycle.high {
+                        // this got kinda overcomplicated but works ig :thumbsup:
+                        let base_offset = (cycle.high - cycle.low) - (pixel - cycle.low);
+                        let offset = base_offset + color_index;
+                        let clamped_offset =
+                            (cycle.high - cycle.low) - offset % (cycle.high - cycle.low);
+                        pixel = cycle.low + clamped_offset;
+                        break;
+                    }
+                }
+                let c = &data.colors[pixel as usize];
+                image_data.push(c.r);
+                image_data.push(c.g);
+                image_data.push(c.b);
+                image_data.push(255); // alpha
+            }
+            let image = Image {
+                width: data.width,
+                height: data.height,
+                bytes: image_data,
+            };
+            texture = Texture2D::from_image(&image);
+            // print!("updated!");
+        } else {
+            frame_counter -= 1;
+        }
         draw_texture(&texture, 0.0, 0.0, WHITE);
         next_frame().await;
     }
