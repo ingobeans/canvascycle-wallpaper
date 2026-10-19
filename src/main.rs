@@ -1,4 +1,8 @@
-use std::mem::MaybeUninit;
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    hash::Hash,
+    mem::MaybeUninit,
+};
 
 use macroquad::prelude::*;
 use regex::Regex;
@@ -33,6 +37,16 @@ struct CanvasCycleImage {
     cycles: Vec<Cycle>,
     pixels: Vec<u8>,
 }
+#[derive(PartialEq, Eq, Debug)]
+struct ChangingPixel {
+    cycle_index: u8,
+    offset: u8,
+}
+impl Hash for ChangingPixel {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        state.write_u16(0 | self.cycle_index as u16 | ((self.offset as u16) << 8));
+    }
+}
 
 #[macroquad::main("my cool canvascycler :3")]
 async fn main() {
@@ -54,18 +68,58 @@ async fn main() {
     let data: Result<CanvasCycleImage, serde_json::Error> = serde_json::from_str(&text);
     let data = data.unwrap();
 
-    #[allow(invalid_value)]
-    // should be fine since frame_counter will always be zero on loop's first iteration,
-    // which in turn would make sure it has an assigned value
-    let mut texture = unsafe { MaybeUninit::uninit().assume_init() };
-
     let mut cycle_offsets = Vec::new();
     for _ in &data.cycles {
         cycle_offsets.push(0);
     }
 
+    // group all pixels that need to same with the same color together
+    let mut changing_pixels: HashMap<ChangingPixel, Vec<usize>> = HashMap::new();
+    'pixel_loop: for (pixel_index, pixel) in data.pixels.iter().enumerate() {
+        for (cycle_index, cycle) in data.cycles.iter().enumerate() {
+            if *pixel >= cycle.low && *pixel <= cycle.high {
+                if cycle.high == cycle.low {
+                    continue;
+                }
+                let offset = *pixel - cycle.low;
+                let changing_pixel = ChangingPixel {
+                    cycle_index: cycle_index as _,
+                    offset,
+                };
+                match changing_pixels.entry(changing_pixel) {
+                    Entry::Occupied(mut entry) => {
+                        entry.get_mut().push(pixel_index);
+                    }
+                    Entry::Vacant(entry) => {
+                        entry.insert(vec![pixel_index]);
+                    }
+                }
+                continue 'pixel_loop;
+            }
+        }
+    }
+    for k in changing_pixels.keys() {
+        println!("{k:?}");
+    }
+
+    let mut image_data = Vec::with_capacity(data.width as usize * data.height as usize * 4);
+    for pixel in &data.pixels {
+        let c = &data.colors[*pixel as usize];
+        image_data.push(c.r);
+        image_data.push(c.g);
+        image_data.push(c.b);
+        image_data.push(255); // alpha
+    }
+    let mut image = Image {
+        width: data.width,
+        height: data.height,
+        bytes: image_data,
+    };
+    let mut texture = Texture2D::from_image(&image);
+
     let mut frame_counter = 0;
     loop {
+        // update image when frame counter is 0
         if frame_counter == 0 {
             for (index, cycle_offset) in cycle_offsets.iter_mut().enumerate() {
                 let cycle_length = data.cycles[index].high - data.cycles[index].low;
@@ -75,38 +129,29 @@ async fn main() {
 
                 *cycle_offset = (*cycle_offset + 1) % cycle_length;
             }
-            frame_counter = 10;
-            let mut image_data = Vec::with_capacity(data.width as usize * data.height as usize * 4);
-            for pixel in &data.pixels {
-                let mut pixel = *pixel;
-                for (index, cycle) in data.cycles.iter().enumerate() {
-                    if cycle.high == cycle.low {
-                        continue;
-                    }
-                    if pixel >= cycle.low && pixel <= cycle.high {
-                        let color_offset = cycle_offsets[index];
 
-                        // this got kinda overcomplicated but works ig :thumbsup:
-                        let base_offset = (cycle.high - cycle.low) - (pixel - cycle.low);
-                        let offset = base_offset + color_offset;
-                        let clamped_offset =
-                            (cycle.high - cycle.low) - offset % (cycle.high - cycle.low);
-                        pixel = cycle.low + clamped_offset;
-                        break;
-                    }
+            // only change the pixels that change
+            for (changing_pixel, indices) in changing_pixels.iter() {
+                let cycle = &data.cycles[changing_pixel.cycle_index as usize];
+                let cycle_length = cycle.high - cycle.low;
+                let cycle_offset = cycle_offsets[changing_pixel.cycle_index as usize];
+
+                let offset = cycle_length - changing_pixel.offset + cycle_offset;
+                let offset_clamped = cycle_length - offset % cycle_length;
+
+                let color_index = cycle.low + offset_clamped;
+                let color = &data.colors[color_index as usize];
+
+                for pixel_index in indices {
+                    let image_data_index = *pixel_index * 4;
+                    image.bytes[image_data_index + 0] = color.r;
+                    image.bytes[image_data_index + 1] = color.g;
+                    image.bytes[image_data_index + 2] = color.b;
                 }
-                let c = &data.colors[pixel as usize];
-                image_data.push(c.r);
-                image_data.push(c.g);
-                image_data.push(c.b);
-                image_data.push(255); // alpha
             }
-            let image = Image {
-                width: data.width,
-                height: data.height,
-                bytes: image_data,
-            };
             texture = Texture2D::from_image(&image);
+
+            frame_counter = 10;
         } else {
             frame_counter -= 1;
         }
