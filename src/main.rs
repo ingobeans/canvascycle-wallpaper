@@ -1,4 +1,4 @@
-use std::mem::MaybeUninit;
+use std::{env::args, mem::MaybeUninit};
 
 use macroquad::prelude::*;
 use regex::Regex;
@@ -36,8 +36,13 @@ struct CanvasCycleImage {
 
 #[macroquad::main("my cool canvascycler :3")]
 async fn main() {
-    let file = "data/images/TESTRAMP.LBM.json";
-    let text = std::fs::read_to_string(file).unwrap();
+    let arg = std::env::args().skip(1).next();
+    let text = if let Some(arg) = arg {
+        std::fs::read_to_string(arg.as_str())
+    } else {
+        std::fs::read_to_string("data/images/TESTRAMP.LBM.json")
+    };
+    let text = text.unwrap();
 
     let pattern = Regex::new(r"([a-z]*):").unwrap();
 
@@ -87,7 +92,6 @@ async fn main() {
                 bytes: image_data,
             };
             texture = Texture2D::from_image(&image);
-            // print!("updated!");
         } else {
             frame_counter -= 1;
         }

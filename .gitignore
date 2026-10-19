@@ -1,3 +1,5 @@
 /target
 output.json
 format.json
+data/images/*
+!data/images/TESTRAMP.LBM.json
