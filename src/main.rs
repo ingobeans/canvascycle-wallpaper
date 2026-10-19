@@ -117,7 +117,7 @@ async fn main() {
         height: data.height,
         bytes: image_data,
     };
-    let mut texture = Texture2D::from_image(&image);
+    let texture = Texture2D::from_image(&image);
     texture.set_filter(FilterMode::Nearest);
 
     let mut frame_counter = 0;
@@ -145,6 +145,7 @@ async fn main() {
                 let color_index = cycle.low + offset_clamped;
                 let color = &data.colors[color_index as usize];
 
+                #[expect(clippy::identity_op)]
                 for pixel_index in indices {
                     let image_data_index = *pixel_index * 4;
                     image.bytes[image_data_index + 0] = color.r;
