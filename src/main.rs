@@ -1,4 +1,4 @@
-use std::{env::args, mem::MaybeUninit};
+use std::mem::MaybeUninit;
 
 use macroquad::prelude::*;
 use regex::Regex;
@@ -55,6 +55,8 @@ async fn main() {
     let data = data.unwrap();
 
     #[allow(invalid_value)]
+    // should be fine since frame_counter will always be zero on loop's first iteration,
+    // which in turn would make sure it has an assigned value
     let mut texture = unsafe { MaybeUninit::uninit().assume_init() };
 
     let mut color_index = 0;
