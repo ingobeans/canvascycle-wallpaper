@@ -118,6 +118,7 @@ async fn main() {
         bytes: image_data,
     };
     let mut texture = Texture2D::from_image(&image);
+    texture.set_filter(FilterMode::Nearest);
 
     let mut frame_counter = 0;
     loop {
@@ -151,7 +152,7 @@ async fn main() {
                     image.bytes[image_data_index + 2] = color.b;
                 }
             }
-            texture = Texture2D::from_image(&image);
+            texture.update(&image);
 
             frame_counter = 10;
         } else {
