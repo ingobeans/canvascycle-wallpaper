@@ -1,3 +1,5 @@
+#![cfg_attr(all(target_os = "windows"), windows_subsystem = "windows")]
+
 use std::{
     collections::{HashMap, hash_map::Entry},
     hash::Hash,
