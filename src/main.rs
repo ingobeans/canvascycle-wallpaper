@@ -1,7 +1,6 @@
 use std::{
     collections::{HashMap, hash_map::Entry},
     hash::Hash,
-    mem::MaybeUninit,
 };
 
 use macroquad::prelude::*;
@@ -37,20 +36,20 @@ struct CanvasCycleImage {
     cycles: Vec<Cycle>,
     pixels: Vec<u8>,
 }
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq)]
 struct ChangingPixel {
     cycle_index: u8,
     offset: u8,
 }
 impl Hash for ChangingPixel {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        state.write_u16(0 | self.cycle_index as u16 | ((self.offset as u16) << 8));
+        state.write_u16(self.cycle_index as u16 | ((self.offset as u16) << 8));
     }
 }
 
 #[macroquad::main("my cool canvascycler :3")]
 async fn main() {
-    let arg = std::env::args().skip(1).next();
+    let arg = std::env::args().nth(1);
     let text = if let Some(arg) = arg {
         std::fs::read_to_string(arg.as_str())
     } else {
@@ -68,10 +67,7 @@ async fn main() {
     let data: Result<CanvasCycleImage, serde_json::Error> = serde_json::from_str(&text);
     let data = data.unwrap();
 
-    let mut cycle_offsets = Vec::new();
-    for _ in &data.cycles {
-        cycle_offsets.push(0);
-    }
+    let mut cycle_offsets = vec![0; data.cycles.len()];
 
     // group all pixels that need to same with the same color together
     let mut changing_pixels: HashMap<ChangingPixel, Vec<usize>> = HashMap::new();
@@ -97,9 +93,6 @@ async fn main() {
                 continue 'pixel_loop;
             }
         }
-    }
-    for k in changing_pixels.keys() {
-        println!("{k:?}");
     }
 
     let mut image_data = Vec::with_capacity(data.width as usize * data.height as usize * 4);
