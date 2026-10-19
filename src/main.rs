@@ -18,6 +18,13 @@ impl PixelRgb {
     fn new(r: u8, g: u8, b: u8) -> Self {
         Self { r, g, b }
     }
+    fn mix(a: &PixelRgb, b: &PixelRgb, amt: f64) -> Self {
+        Self {
+            r: (a.r as f64 + (b.r as f64 - a.r as f64) * amt) as u8,
+            g: (a.g as f64 + (b.g as f64 - a.g as f64) * amt) as u8,
+            b: (a.b as f64 + (b.b as f64 - a.b as f64) * amt) as u8,
+        }
+    }
 }
 #[derive(Serialize, Deserialize)]
 struct Cycle {
@@ -120,45 +127,49 @@ async fn main() {
     let texture = Texture2D::from_image(&image);
     texture.set_filter(FilterMode::Nearest);
 
-    let mut frame_counter = 0;
+    let interval_time = 0.1;
     loop {
-        // update image when frame counter is 0
-        if frame_counter == 0 {
-            for (index, cycle_offset) in cycle_offsets.iter_mut().enumerate() {
-                let cycle_length = data.cycles[index].high - data.cycles[index].low;
-                if cycle_length == 0 {
-                    continue;
-                }
-
-                *cycle_offset = (*cycle_offset + 1) % cycle_length;
+        for (index, cycle_offset) in cycle_offsets.iter_mut().enumerate() {
+            let cycle_length = data.cycles[index].high - data.cycles[index].low;
+            if cycle_length == 0 {
+                continue;
             }
 
-            // only change the pixels that change
-            for (changing_pixel, indices) in changing_pixels.iter() {
-                let cycle = &data.cycles[changing_pixel.cycle_index as usize];
-                let cycle_length = cycle.high - cycle.low;
-                let cycle_offset = cycle_offsets[changing_pixel.cycle_index as usize];
-
-                let offset = cycle_length - changing_pixel.offset + cycle_offset;
-                let offset_clamped = cycle_length - offset % cycle_length;
-
-                let color_index = cycle.low + offset_clamped;
-                let color = &data.colors[color_index as usize];
-
-                #[expect(clippy::identity_op)]
-                for pixel_index in indices {
-                    let image_data_index = *pixel_index * 4;
-                    image.bytes[image_data_index + 0] = color.r;
-                    image.bytes[image_data_index + 1] = color.g;
-                    image.bytes[image_data_index + 2] = color.b;
-                }
-            }
-            texture.update(&image);
-
-            frame_counter = 10;
-        } else {
-            frame_counter -= 1;
+            *cycle_offset = (*cycle_offset + 1) % cycle_length;
         }
+        let time = get_time();
+
+        // only change the pixels that change
+        for (changing_pixel, indices) in changing_pixels.iter() {
+            let cycle = &data.cycles[changing_pixel.cycle_index as usize];
+            let cycle_length = cycle.high - cycle.low;
+            // let cycle_offset = cycle_offsets[changing_pixel.cycle_index as usize];
+            let last_time = interval_time * (time / interval_time).floor();
+            let cycle_offset = ((time / interval_time).floor() % cycle_length as f64) as u8;
+            let transition_amt = (time - last_time) / interval_time;
+
+            let offset = cycle_length - changing_pixel.offset + cycle_offset;
+
+            let offset_clamped = cycle_length - offset % cycle_length;
+            let next_offset_clamped = cycle_length - (offset + 1) % cycle_length;
+
+            let color_index = cycle.low + offset_clamped;
+            let mut color = &data.colors[color_index as usize];
+
+            let next_color_index = cycle.low + next_offset_clamped;
+            let next_color = &data.colors[next_color_index as usize];
+
+            let mixed_color = PixelRgb::mix(color, next_color, transition_amt);
+
+            #[expect(clippy::identity_op)]
+            for pixel_index in indices {
+                let image_data_index = *pixel_index * 4;
+                image.bytes[image_data_index + 0] = mixed_color.r;
+                image.bytes[image_data_index + 1] = mixed_color.g;
+                image.bytes[image_data_index + 2] = mixed_color.b;
+            }
+        }
+        texture.update(&image);
 
         let (width, height) = screen_size();
         let scale_factor = (width / data.width as f32).min(height / data.height as f32);
