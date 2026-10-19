@@ -157,22 +157,20 @@ async fn main() {
         } else {
             frame_counter -= 1;
         }
-        let (width, height) = screen_size();
-        let screen_aspect = width / height;
-        let aspect = data.width as f32 / data.height as f32;
-        let rect = if screen_aspect < aspect {
-            Vec2::new(width, width / aspect)
-        } else {
-            Vec2::new(height * aspect, height)
-        };
 
+        let (width, height) = screen_size();
+        let scale_factor = (width / data.width as f32).min(height / data.height as f32);
+        // .floor();
+        let dest_width = data.width as f32 * scale_factor;
+        let dest_height = data.height as f32 * scale_factor;
+        let x_offset = (width - dest_width) / 2.0;
         draw_texture_ex(
             &texture,
-            0.0,
+            x_offset,
             0.0,
             WHITE,
             DrawTextureParams {
-                dest_size: Some(rect),
+                dest_size: Some(Vec2::new(dest_width, dest_height)),
                 ..Default::default()
             },
         );
