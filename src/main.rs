@@ -128,6 +128,8 @@ async fn main() {
     texture.set_filter(FilterMode::Nearest);
 
     let interval_time = 0.1;
+    let integer_scaling = false;
+
     let mut fullscreen = false;
     loop {
         for (index, cycle_offset) in cycle_offsets.iter_mut().enumerate() {
@@ -173,15 +175,18 @@ async fn main() {
         texture.update(&image);
 
         let (width, height) = screen_size();
-        let scale_factor = (width / data.width as f32).min(height / data.height as f32);
-        // .floor();
+        let mut scale_factor = (width / data.width as f32).min(height / data.height as f32);
+        if integer_scaling {
+            scale_factor = scale_factor.floor();
+        }
         let dest_width = data.width as f32 * scale_factor;
         let dest_height = data.height as f32 * scale_factor;
         let x_offset = (width - dest_width) / 2.0;
+        let y_offset = (height - dest_height) / 2.0;
         draw_texture_ex(
             &texture,
             x_offset,
-            0.0,
+            y_offset,
             WHITE,
             DrawTextureParams {
                 dest_size: Some(Vec2::new(dest_width, dest_height)),
