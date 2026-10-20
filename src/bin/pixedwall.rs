@@ -81,23 +81,9 @@ fn main() {
                 "received message from primary: {:?}",
                 String::from_utf8_lossy(&current_message)
             );
-            match &current_message[..] {
-                b"exit" => {
-                    println!("Exit received!");
-                    for stdin in &mut stdins {
-                        stdin.write_all(b"exit\n").unwrap();
-                    }
-                }
-                s if s.starts_with(b"change-wallpaper") => {
-                    for stdin in &mut stdins {
-                        stdin.write_all(b"change-wallpaper").unwrap();
-                        stdin.write_all(&s[b"change-wallpaper".len()..]).unwrap();
-                        stdin.write_all(b"\n").unwrap();
-                    }
-                }
-                _ => {
-                    eprintln!("Unknown message.");
-                }
+            for stdin in &mut stdins {
+                stdin.write_all(&current_message).unwrap();
+                stdin.write_all(b"\n").unwrap();
             }
 
             current_message.clear();
