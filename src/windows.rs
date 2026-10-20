@@ -17,6 +17,8 @@ use winapi::{
     },
 };
 
+use super::utils::*;
+
 pub fn find_miniquad_window() -> Option<HWND> {
     let result = unsafe { FindWindowA(c"MINIQUADAPP".as_ptr().cast(), std::ptr::null()) };
     if result as usize == 0 {
@@ -97,7 +99,7 @@ pub fn set_tray(hwnd: HWND) {
     }
 }
 
-fn get_monitors() -> Vec<RECT> {
+pub fn get_monitors() -> Vec<RECT> {
     unsafe extern "system" fn enum_callback(
         hmon: HMONITOR,
         _hdc: HDC,
@@ -135,7 +137,7 @@ fn get_monitors() -> Vec<RECT> {
 /// Holy vibecoded
 ///
 /// Even god's mightiest soldiers have their limits. (mine are debugging undocumented windows APIs for over 3 hours and its already 2 am)
-pub fn style_window_as_wallpaper(hwnd: HWND) {
+pub fn style_window_as_wallpaper(hwnd: HWND, wallpaper: WallpaperOptions) {
     let monitors = get_monitors();
     let result = unsafe {
         SetWindowPos(
@@ -205,7 +207,7 @@ pub fn style_window_as_wallpaper(hwnd: HWND) {
         eprintln!("Failed to set parent.");
     }
 
-    let rect = monitors[0];
+    let rect = wallpaper;
 
     let mut smallest_left = monitors[0].left;
     let mut smallest_top = monitors[0].top;

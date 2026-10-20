@@ -11,10 +11,14 @@ use std::{
 use macroquad::{miniquad::window::screen_size, prelude::*};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use utils::*;
 
 #[cfg(windows)]
 #[path = "../windows.rs"]
 mod windows;
+
+#[path = "../utils.rs"]
+mod utils;
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 struct PixelRgb {
@@ -35,7 +39,7 @@ impl PixelRgb {
         }
     }
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 struct Cycle {
     reverse: u8,
     rate: u16,
@@ -43,8 +47,8 @@ struct Cycle {
     high: u8,
 }
 
-#[derive(Serialize, Deserialize)]
-struct CanvasCycleImage {
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CanvasCycleImage {
     filename: String,
     width: u16,
     height: u16,
@@ -63,7 +67,7 @@ impl Hash for ChangingPixel {
     }
 }
 
-fn window() -> Conf {
+pub fn window_conf() -> Conf {
     Conf {
         window_title: "my cool canvascycler :3".to_string(),
         window_width: 640,
@@ -72,8 +76,16 @@ fn window() -> Conf {
     }
 }
 
-#[macroquad::main(window)]
-async fn main() {
+pub fn parse_file_data(text: &str) -> CanvasCycleImage {
+    let pattern = Regex::new(r"([a-z]*):").unwrap();
+    let text = pattern
+        .replace_all(text, "\"$1\":".to_string())
+        .replace("'", "\"");
+    let data: Result<CanvasCycleImage, serde_json::Error> = serde_json::from_str(&text);
+    data.unwrap()
+}
+
+fn main() {
     let mut args = std::env::args().skip(1);
     let arg = args.next();
     let text = if let Some(arg) = arg {
@@ -81,32 +93,48 @@ async fn main() {
     } else {
         std::fs::read_to_string("data/images/TESTRAMP.LBM.json")
     };
-    let text = text.unwrap();
 
+    let text = text.unwrap();
+    let data = parse_file_data(&text);
+
+    let wallpaper = args
+        .next()
+        .is_some_and(|a| a.as_str() == "-w" || a.as_str() == "--wallpaper");
+
+    let wallpaper = if wallpaper {
+        #[cfg(windows)]
+        {
+            let monitors = windows::get_monitors();
+            let monitor_index: usize = args.next().and_then(|a| a.parse().ok()).unwrap_or_default();
+            let monitor = monitors[monitor_index];
+
+            Some(WallpaperOptions {
+                left: monitor.left,
+                top: monitor.top,
+                right: monitor.right,
+                bottom: monitor.bottom,
+            })
+        }
+        #[cfg(not(windows))]
+        Some(())
+    } else {
+        None
+    };
+
+    macroquad::Window::from_config(window_conf(), show(data, wallpaper));
+}
+
+pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>) {
     #[cfg(windows)]
     {
         windows::set_window_scaling();
-        let wallpaper = args
-            .next()
-            .is_some_and(|a| a.as_str() == "-w" || a.as_str() == "--wallpaper");
-        if let Some(hwnd) = windows::find_miniquad_window() {
-            windows::set_tray(hwnd);
-            if wallpaper {
-                println!("hwnd found!");
-                windows::style_window_as_wallpaper(hwnd);
-            }
+        if let Some(wallpaper) = as_wallpaper
+            && let Some(hwnd) = windows::find_miniquad_window()
+        {
+            println!("hwnd found!");
+            windows::style_window_as_wallpaper(hwnd, wallpaper);
         }
     }
-
-    let pattern = Regex::new(r"([a-z]*):").unwrap();
-
-    let text = pattern
-        .replace_all(&text, "\"$1\":".to_string())
-        .replace("'", "\"");
-    std::fs::write("output.json", &text).unwrap();
-
-    let data: Result<CanvasCycleImage, serde_json::Error> = serde_json::from_str(&text);
-    let data = data.unwrap();
 
     // group all pixels that need to same with the same color together
     let mut changing_pixels: HashMap<ChangingPixel, Vec<usize>> = HashMap::new();
