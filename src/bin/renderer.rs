@@ -83,14 +83,14 @@ pub fn parse_file_data(text: &str) -> CanvasCycleImage {
     data.unwrap()
 }
 
-fn start_stdin_channel() -> Receiver<u8> {
+fn start_stdin_channel() -> Receiver<String> {
     let (tx, rx) = mpsc::channel();
     std::thread::spawn(move || {
         let mut stdin = std::io::stdin();
-        let mut buf = [0];
         loop {
-            stdin.read_exact(&mut buf).unwrap();
-            let r = tx.send(buf[0]);
+            let mut buf = String::new();
+            stdin.read_line(&mut buf).unwrap();
+            let r = tx.send(buf);
             if let Err(e) = r {
                 println!("{e:?}");
             }
@@ -224,7 +224,14 @@ async fn main() {
 
         // check stdin
         if let Ok(value) = stdin_rx.try_recv() {
-            println!("recv:{value}");
+            match value.trim() {
+                "exit" => {
+                    break;
+                }
+                _ => {
+                    eprintln!("Unknown command.")
+                }
+            }
         }
 
         let time = get_time();

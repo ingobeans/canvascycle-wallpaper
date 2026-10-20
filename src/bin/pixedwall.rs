@@ -2,7 +2,11 @@
     all(target_os = "windows", not(debug_assertions),),
     windows_subsystem = "windows"
 )]
-use std::{io::Read, path::PathBuf, process::Stdio};
+use std::{
+    io::{Read, Write},
+    path::PathBuf,
+    process::Stdio,
+};
 
 #[path = "../utils.rs"]
 pub mod utils;
@@ -36,6 +40,8 @@ fn main() {
     // and data can be sent to it through stdin.
     let mut primary = unsafe { std::mem::MaybeUninit::uninit().assume_init() };
 
+    let mut stdins = Vec::new();
+
     let mut seconday_handles = Vec::new();
     for i in 0..monitors.len() {
         let mut command = std::process::Command::new(&renderer);
@@ -51,11 +57,12 @@ fn main() {
 
         let mut handle = handle.spawn().unwrap();
 
+        let stdin = handle.stdin.take().unwrap();
+        stdins.push(stdin);
         if i == 0 {
             primary = handle;
         } else {
-            let stdin = handle.stdin.take().unwrap();
-            seconday_handles.push((handle, stdin));
+            seconday_handles.push(handle);
         }
     }
     println!("Wallpapers loaded!");
@@ -77,6 +84,9 @@ fn main() {
             match &current_message[..] {
                 b"exit" => {
                     println!("Exit received!");
+                    for stdin in &mut stdins {
+                        stdin.write_all(b"exit\n").unwrap();
+                    }
                 }
                 _ => {
                     eprintln!("Unknown message.");
@@ -89,7 +99,7 @@ fn main() {
         }
     }
 
-    for (mut handle, _) in seconday_handles {
+    for mut handle in seconday_handles {
         let _ = handle.wait();
     }
 }
