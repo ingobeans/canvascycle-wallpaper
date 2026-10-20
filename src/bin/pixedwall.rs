@@ -31,17 +31,17 @@ fn main() {
 
     let mut handles = Vec::new();
     for i in 0..monitors.len() {
-        let handle = std::process::Command::new(&renderer)
-            .arg(&path)
-            .arg("-w")
-            .arg(i.to_string())
-            .spawn()
-            .unwrap();
+        let mut command = std::process::Command::new(&renderer);
+        let mut handle = command.arg(&path).arg("-w").arg(i.to_string());
+        if i == 0 {
+            handle = handle.arg("--tray");
+        }
+        let handle = handle.spawn().unwrap();
         handles.push(handle);
         std::thread::sleep(Duration::from_millis(100));
     }
     println!("Wallpapers loaded!");
     for mut handle in handles {
-        handle.wait().unwrap();
+        let _ = handle.wait();
     }
 }

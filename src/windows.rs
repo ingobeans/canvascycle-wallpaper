@@ -1,4 +1,4 @@
-#![expect(dead_code)]
+#![allow(dead_code)]
 use winapi::{
     DEFINE_GUID,
     shared::windef::{HDC, HMONITOR, HWND, LPRECT, RECT},

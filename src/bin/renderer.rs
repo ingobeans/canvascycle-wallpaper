@@ -115,18 +115,25 @@ fn main() {
     } else {
         None
     };
+    let tray = args.next().is_some_and(|a| a.as_str() == "--tray");
 
-    macroquad::Window::from_config(window_conf(), show(data, wallpaper));
+    macroquad::Window::from_config(window_conf(), show(data, wallpaper, tray));
 }
 
-pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>) {
+pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>, tray: bool) {
     #[cfg(windows)]
     {
         windows::set_window_scaling();
-        if let Some(wallpaper) = as_wallpaper
+        if (tray || as_wallpaper.is_some())
             && let Some(hwnd) = windows::find_miniquad_window()
         {
-            windows::style_window_as_wallpaper(hwnd, wallpaper);
+            if tray {
+                windows::set_tray(hwnd);
+            }
+
+            if let Some(wallpaper) = as_wallpaper {
+                windows::style_window_as_wallpaper(hwnd, wallpaper);
+            }
         }
     }
 
