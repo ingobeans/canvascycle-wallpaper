@@ -1,19 +1,19 @@
 #![allow(dead_code)]
 use winapi::{
     DEFINE_GUID,
-    shared::windef::{HDC, HMONITOR, HWND, LPRECT, RECT},
+    shared::windef::{HDC, HMONITOR, HWND, LPRECT, POINT, RECT},
     um::{
-        shellapi::{
-            NIF_ICON, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, NOTIFYICONDATAA_u, Shell_NotifyIconA,
-        },
+        shellapi::{NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, Shell_NotifyIconA},
         shellscalingapi::{PROCESS_PER_MONITOR_DPI_AWARE, SetProcessDpiAwareness},
         winuser::{
-            CreateIconFromResourceEx, EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE,
-            GWL_STYLE, GetWindowLongPtrW, HWND_BOTTOM, LR_DEFAULTCOLOR,
-            LookupIconIdFromDirectoryEx, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE,
-            SWP_NOSIZE, SendMessageA, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow,
-            WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX,
-            WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
+            AppendMenuA, CreateIconFromResourceEx, CreatePopupMenu, EnumDisplayMonitors,
+            FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetCursorPos, GetWindowLongPtrW,
+            HWND_BOTTOM, LR_DEFAULTCOLOR, LookupIconIdFromDirectoryEx, MF_STRING, SW_SHOW,
+            SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SendMessageA,
+            SetForegroundWindow, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow,
+            TPM_NONOTIFY, TPM_RETURNCMD, TrackPopupMenu, WM_MOUSEMOVE, WS_BORDER, WS_CAPTION,
+            WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP,
+            WS_SYSMENU, WS_THICKFRAME,
         },
     },
 };
@@ -77,20 +77,27 @@ pub fn set_tray(hwnd: HWND) {
         }
     }
 
+    #[repr(C)]
+    union NotifyIconDataUnion {
+        u_timeout: u32,
+        u_version: u32,
+    }
+
+    let u = NotifyIconDataUnion { u_version: 0 };
     let mut data = NOTIFYICONDATAA {
         cbSize: size_of::<NOTIFYICONDATAA>() as _,
         hWnd: hwnd,
         dwInfoFlags: 0,
-        uCallbackMessage: 0,
+        uCallbackMessage: WM_MOUSEMOVE,
         hIcon: icon,
         dwState: 0,
         dwStateMask: 0,
         szInfo: sz_info,
         szInfoTitle: sz_info_title,
         uID: 0,
-        uFlags: NIF_TIP | NIF_ICON,
+        uFlags: NIF_TIP | NIF_ICON | NIF_MESSAGE,
         szTip: sz_tip,
-        u: unsafe { *(&[0] as *const _ as *const NOTIFYICONDATAA_u) },
+        u: unsafe { std::mem::transmute(u) },
         guidItem: GUID_NULL,
         hBalloonIcon: std::ptr::null_mut(),
     };
@@ -126,10 +133,34 @@ pub fn get_monitors() -> Vec<RECT> {
     rects
 }
 
+pub fn show_context_menu(hwnd: HWND) {
+    let mut cursor_pos = POINT { x: 0, y: 0 };
+    unsafe { GetCursorPos(&mut cursor_pos) };
+
+    let menu = unsafe { CreatePopupMenu() };
+
+    unsafe { AppendMenuA(menu, MF_STRING, 1, c"waa".as_ptr().into()) };
+
+    unsafe { SetForegroundWindow(hwnd) };
+
+    let cmd = unsafe {
+        TrackPopupMenu(
+            menu,
+            TPM_RETURNCMD | TPM_NONOTIFY,
+            cursor_pos.x,
+            cursor_pos.y,
+            0,
+            hwnd,
+            std::ptr::null(),
+        )
+    };
+    println!("cmd:{cmd}");
+}
+
 /// Holy vibecoded
 ///
 /// Even god's mightiest soldiers have their limits. (mine are debugging undocumented windows APIs for over 3 hours and its already 2 am)
-pub fn style_window_as_wallpaper(hwnd: HWND, wallpaper: WallpaperOptions) {
+pub fn style_window_as_wallpaper(hwnd: HWND, wallpaper: &WallpaperOptions) {
     let monitors = get_monitors();
     let result = unsafe {
         SetWindowPos(

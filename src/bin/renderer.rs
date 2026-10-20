@@ -122,16 +122,19 @@ fn main() {
 
 pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>, tray: bool) {
     #[cfg(windows)]
+    let hwnd;
+    #[cfg(windows)]
     {
+        hwnd = windows::find_miniquad_window();
         windows::set_window_scaling();
         if (tray || as_wallpaper.is_some())
-            && let Some(hwnd) = windows::find_miniquad_window()
+            && let Some(hwnd) = hwnd
         {
             if tray {
                 windows::set_tray(hwnd);
             }
 
-            if let Some(wallpaper) = as_wallpaper {
+            if let Some(wallpaper) = &as_wallpaper {
                 windows::style_window_as_wallpaper(hwnd, wallpaper);
             }
         }
@@ -184,6 +187,23 @@ pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>
 
     let mut fullscreen = false;
     loop {
+        #[cfg(windows)]
+        if as_wallpaper.is_some() {
+            let mouse = mouse_delta_position();
+            if mouse != Vec2::ZERO {
+                let x: u32 = mouse.x.to_bits();
+                let y: u32 = mouse.y.to_bits();
+                if x == 3148524160 {
+                    println!("right click");
+                    windows::show_context_menu(hwnd.unwrap());
+                } else if [1001040512, 3137898496, 3142372608, 990414848].contains(&x) {
+                    // known but unhandled message ids
+                } else {
+                    // unknown message ids
+                    println!("unknown message id received: {x},{y}");
+                }
+            }
+        }
         let time = get_time();
 
         // only change the pixels that change
