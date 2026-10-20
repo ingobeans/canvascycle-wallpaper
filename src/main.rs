@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(windows)]
 mod windows;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 struct PixelRgb {
     r: u8,
     g: u8,
@@ -103,8 +103,6 @@ async fn main() {
     let data: Result<CanvasCycleImage, serde_json::Error> = serde_json::from_str(&text);
     let data = data.unwrap();
 
-    let mut cycle_offsets = vec![0; data.cycles.len()];
-
     // group all pixels that need to same with the same color together
     let mut changing_pixels: HashMap<ChangingPixel, Vec<usize>> = HashMap::new();
     'pixel_loop: for (pixel_index, pixel) in data.pixels.iter().enumerate() {
@@ -152,37 +150,36 @@ async fn main() {
 
     let mut fullscreen = false;
     loop {
-        for (index, cycle_offset) in cycle_offsets.iter_mut().enumerate() {
-            let cycle_length = data.cycles[index].high - data.cycles[index].low;
-            if cycle_length == 0 {
-                continue;
-            }
-
-            *cycle_offset = (*cycle_offset + 1) % cycle_length;
-        }
         let time = get_time();
 
         // only change the pixels that change
         for (changing_pixel, indices) in changing_pixels.iter() {
             let cycle = &data.cycles[changing_pixel.cycle_index as usize];
             let cycle_length = cycle.high - cycle.low;
-            // let cycle_offset = cycle_offsets[changing_pixel.cycle_index as usize];
-            let last_time = interval_time * (time / interval_time).floor();
-            let cycle_offset = ((time / interval_time).floor() % cycle_length as f64) as u8;
-            let transition_amt = (time - last_time) / interval_time;
 
-            let offset = cycle_length - changing_pixel.offset + cycle_offset;
+            let mixed_color;
+            if cycle.rate != 0 {
+                let interval_rate_time = interval_time / (cycle.rate as f64 / 2500.0);
+                let last_time = interval_rate_time * (time / interval_rate_time).floor();
+                let cycle_offset =
+                    ((time / interval_rate_time).floor() % cycle_length as f64) as u8;
+                let transition_amt = (time - last_time) / interval_rate_time;
 
-            let offset_clamped = cycle_length - offset % cycle_length;
-            let next_offset_clamped = cycle_length - (offset + 1) % cycle_length;
+                let offset = cycle_length - changing_pixel.offset + cycle_offset;
 
-            let color_index = cycle.low + offset_clamped;
-            let color = &data.colors[color_index as usize];
+                let offset_clamped = cycle_length - offset % cycle_length;
+                let next_offset_clamped = cycle_length - (offset + 1) % cycle_length;
 
-            let next_color_index = cycle.low + next_offset_clamped;
-            let next_color = &data.colors[next_color_index as usize];
+                let color_index = cycle.low + offset_clamped;
+                let color = &data.colors[color_index as usize];
 
-            let mixed_color = PixelRgb::mix(color, next_color, transition_amt);
+                let next_color_index = cycle.low + next_offset_clamped;
+                let next_color = &data.colors[next_color_index as usize];
+
+                mixed_color = PixelRgb::mix(color, next_color, transition_amt);
+            } else {
+                mixed_color = data.colors[(changing_pixel.offset + cycle.low) as usize];
+            }
 
             #[expect(clippy::identity_op)]
             for pixel_index in indices {
