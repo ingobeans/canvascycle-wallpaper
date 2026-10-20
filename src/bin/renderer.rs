@@ -193,7 +193,7 @@ pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>
             if mouse != Vec2::ZERO {
                 let x: u32 = mouse.x.to_bits();
                 let y: u32 = mouse.y.to_bits();
-                if x == 3148524160 {
+                if x == 3148524160 || x == 3137898496 {
                     println!("right click");
                     windows::show_context_menu(hwnd.unwrap());
                 } else if [1001040512, 3137898496, 3142372608, 990414848].contains(&x) {
