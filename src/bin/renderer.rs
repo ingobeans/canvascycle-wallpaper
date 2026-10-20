@@ -1,6 +1,8 @@
 use std::{
     collections::{HashMap, hash_map::Entry},
     hash::Hash,
+    io::Read,
+    sync::mpsc::{self, Receiver},
 };
 
 use crate::utils::WallpaperOptions;
@@ -81,6 +83,22 @@ pub fn parse_file_data(text: &str) -> CanvasCycleImage {
     data.unwrap()
 }
 
+fn start_stdin_channel() -> Receiver<u8> {
+    let (tx, rx) = mpsc::channel();
+    std::thread::spawn(move || {
+        let mut stdin = std::io::stdin();
+        let mut buf = [0];
+        loop {
+            stdin.read_exact(&mut buf).unwrap();
+            let r = tx.send(buf[0]);
+            if let Err(e) = r {
+                println!("{e:?}");
+            }
+        }
+    });
+    rx
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut args = std::env::args().skip(1);
@@ -90,6 +108,7 @@ async fn main() {
     } else {
         std::fs::read_to_string("data/images/TESTRAMP.LBM.json")
     };
+    let stdin_rx = start_stdin_channel();
 
     let text = text.unwrap();
     let data = parse_file_data(&text);
@@ -183,6 +202,8 @@ async fn main() {
     let integer_scaling = false;
 
     let mut fullscreen = false;
+
+    // main loop
     loop {
         #[cfg(windows)]
         if as_wallpaper.is_some() {
@@ -201,6 +222,12 @@ async fn main() {
                 }
             }
         }
+
+        // check stdin
+        if let Ok(value) = stdin_rx.try_recv() {
+            println!("recv:{value}");
+        }
+
         let time = get_time();
 
         // only change the pixels that change
