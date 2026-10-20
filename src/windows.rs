@@ -3,15 +3,18 @@ use winapi::{
     shared::windef::{HDC, HMONITOR, HWND, LPRECT, RECT},
     um::{
         shellapi::{
-            NIF_INFO, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, NOTIFYICONDATAA_u, Shell_NotifyIconA,
+            NIF_ICON, NIF_INFO, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, NOTIFYICONDATAA_u,
+            Shell_NotifyIconA,
         },
         shellscalingapi::{PROCESS_PER_MONITOR_DPI_AWARE, SetProcessDpiAwareness},
         winuser::{
-            EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE,
-            GetWindowLongPtrW, HWND_BOTTOM, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE,
-            SWP_NOSIZE, SendMessageA, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow,
-            WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX,
-            WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
+            CreateIconFromResourceEx, EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE,
+            GWL_STYLE, GetWindowLongPtrW, HWND_BOTTOM, IMAGE_ICON, LR_DEFAULTCOLOR,
+            LR_LOADFROMFILE, LoadIconW, LoadImageW, LookupIconIdFromDirectoryEx, SW_SHOW,
+            SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SendMessageA, SetParent,
+            SetWindowLongPtrW, SetWindowPos, ShowWindow, WS_BORDER, WS_CAPTION, WS_CHILD,
+            WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU,
+            WS_THICKFRAME,
         },
     },
 };
@@ -42,21 +45,49 @@ const fn fixed_length_str<const N: usize, const A: usize>(text: &[u8; A]) -> [i8
 
 pub fn set_tray(hwnd: HWND) {
     DEFINE_GUID! {GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
     let sz_info = fixed_length_str(b"Pixedwall");
     let sz_info_title = fixed_length_str(b"Pixedwall");
     let sz_tip = fixed_length_str(b"Pixedwall");
+
+    let mut icon = std::ptr::null_mut();
+    let icon_data = include_bytes!("../assets/icon.ico");
+    let offset = unsafe {
+        LookupIconIdFromDirectoryEx(icon_data as *const _ as _, 1, 16, 16, LR_DEFAULTCOLOR)
+    };
+    if offset == 0 {
+        eprintln!("Failed to load icon resource");
+    } else {
+        let result = unsafe {
+            CreateIconFromResourceEx(
+                ((icon_data as *const _ as usize) + offset as usize) as _,
+                icon_data.len() as _,
+                1,
+                0x00030000,
+                16,
+                16,
+                LR_DEFAULTCOLOR,
+            )
+        };
+        if result as usize == 0 {
+            eprintln!("Failed to load icon");
+        } else {
+            icon = result as usize as _;
+        }
+    }
+
     let mut data = NOTIFYICONDATAA {
         cbSize: size_of::<NOTIFYICONDATAA>() as _,
         hWnd: hwnd,
         dwInfoFlags: 0,
         uCallbackMessage: 0,
-        hIcon: std::ptr::null_mut(),
+        hIcon: icon,
         dwState: 0,
         dwStateMask: 0,
         szInfo: sz_info,
         szInfoTitle: sz_info_title,
         uID: 0,
-        uFlags: NIF_INFO | NIF_TIP,
+        uFlags: NIF_TIP | NIF_ICON,
         szTip: sz_tip,
         u: unsafe { *(&[0] as *const _ as *const NOTIFYICONDATAA_u) },
         guidItem: GUID_NULL,
