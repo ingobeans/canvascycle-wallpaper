@@ -15,10 +15,10 @@ use utils::*;
 
 #[cfg(windows)]
 #[path = "../windows.rs"]
-mod windows;
+pub mod windows;
 
 #[path = "../utils.rs"]
-mod utils;
+pub mod utils;
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 struct PixelRgb {
@@ -85,6 +85,7 @@ pub fn parse_file_data(text: &str) -> CanvasCycleImage {
     data.unwrap()
 }
 
+#[allow(dead_code)]
 fn main() {
     let mut args = std::env::args().skip(1);
     let arg = args.next();
