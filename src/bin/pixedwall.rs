@@ -88,6 +88,13 @@ fn main() {
                         stdin.write_all(b"exit\n").unwrap();
                     }
                 }
+                s if s.starts_with(b"change-wallpaper") => {
+                    for stdin in &mut stdins {
+                        stdin.write_all(b"change-wallpaper").unwrap();
+                        stdin.write_all(&s[b"change-wallpaper".len()..]).unwrap();
+                        stdin.write_all(b"\n").unwrap();
+                    }
+                }
                 _ => {
                     eprintln!("Unknown message.");
                 }

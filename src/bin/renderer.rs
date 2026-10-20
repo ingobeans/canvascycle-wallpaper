@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, hash_map::Entry},
     hash::Hash,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::mpsc::{self, Receiver},
 };
 
@@ -99,6 +99,53 @@ fn start_stdin_channel() -> Receiver<String> {
     rx
 }
 
+fn read_image_data(path: &Path) -> CanvasCycleImage {
+    let text = std::fs::read_to_string(&path);
+
+    let text = text.unwrap();
+    let data = parse_file_data(&text);
+    data
+}
+
+type ChangingPixels = HashMap<ChangingPixel, Vec<usize>>;
+
+fn load_new_image(image_data: &mut Vec<u8>, data: &CanvasCycleImage) -> ChangingPixels {
+    // group all pixels that need to same with the same color together
+    let mut changing_pixels: ChangingPixels = HashMap::new();
+    'pixel_loop: for (pixel_index, pixel) in data.pixels.iter().enumerate() {
+        for (cycle_index, cycle) in data.cycles.iter().enumerate() {
+            if *pixel >= cycle.low && *pixel <= cycle.high {
+                if cycle.high == cycle.low || cycle.rate == 0 {
+                    continue;
+                }
+                let offset = *pixel - cycle.low;
+                let changing_pixel = ChangingPixel {
+                    cycle_index: cycle_index as _,
+                    offset,
+                };
+                match changing_pixels.entry(changing_pixel) {
+                    Entry::Occupied(mut entry) => {
+                        entry.get_mut().push(pixel_index);
+                    }
+                    Entry::Vacant(entry) => {
+                        entry.insert(vec![pixel_index]);
+                    }
+                }
+                continue 'pixel_loop;
+            }
+        }
+    }
+
+    for (index, pixel) in data.pixels.iter().enumerate() {
+        let c = &data.colors[*pixel as usize];
+        image_data[index * 4 + 0] = c.r;
+        image_data[index * 4 + 1] = c.g;
+        image_data[index * 4 + 2] = c.b;
+        image_data[index * 4 + 3] = 255; // alpha
+    }
+    changing_pixels
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut args = std::env::args().skip(1);
@@ -108,11 +155,8 @@ async fn main() {
     } else {
         PathBuf::from("data/images/TESTRAMP.LBM.json")
     };
-    let text = std::fs::read_to_string(&path);
     let stdin_rx = start_stdin_channel();
-
-    let text = text.unwrap();
-    let data = parse_file_data(&text);
+    let mut data = read_image_data(&path);
 
     let wallpaper = args
         .next()
@@ -155,7 +199,7 @@ async fn main() {
             };
             let mut name = name.to_string();
             name.push('\x00');
-            entries.push(name);
+            entries.push((name, item.path()));
         }
         entries
     } else {
@@ -179,41 +223,8 @@ async fn main() {
             windows::style_window_as_wallpaper(hwnd, wallpaper);
         }
     }
-
-    // group all pixels that need to same with the same color together
-    let mut changing_pixels: HashMap<ChangingPixel, Vec<usize>> = HashMap::new();
-    'pixel_loop: for (pixel_index, pixel) in data.pixels.iter().enumerate() {
-        for (cycle_index, cycle) in data.cycles.iter().enumerate() {
-            if *pixel >= cycle.low && *pixel <= cycle.high {
-                if cycle.high == cycle.low || cycle.rate == 0 {
-                    continue;
-                }
-                let offset = *pixel - cycle.low;
-                let changing_pixel = ChangingPixel {
-                    cycle_index: cycle_index as _,
-                    offset,
-                };
-                match changing_pixels.entry(changing_pixel) {
-                    Entry::Occupied(mut entry) => {
-                        entry.get_mut().push(pixel_index);
-                    }
-                    Entry::Vacant(entry) => {
-                        entry.insert(vec![pixel_index]);
-                    }
-                }
-                continue 'pixel_loop;
-            }
-        }
-    }
-
-    let mut image_data = Vec::with_capacity(data.width as usize * data.height as usize * 4);
-    for pixel in &data.pixels {
-        let c = &data.colors[*pixel as usize];
-        image_data.push(c.r);
-        image_data.push(c.g);
-        image_data.push(c.b);
-        image_data.push(255); // alpha
-    }
+    let mut image_data = vec![0; data.width as usize * data.height as usize * 4];
+    let mut changing_pixels = load_new_image(&mut image_data, &data);
     let mut image = Image {
         width: data.width,
         height: data.height,
@@ -251,6 +262,12 @@ async fn main() {
             match value.trim() {
                 "exit" => {
                     break;
+                }
+                s if s.starts_with("change-wallpaper") => {
+                    let new_file = &s["change-wallpaper".len()..];
+                    data = read_image_data(&PathBuf::from(new_file));
+                    changing_pixels = load_new_image(&mut image.bytes, &data);
+                    texture.update(&image);
                 }
                 _ => {
                     eprintln!("Unknown command.")

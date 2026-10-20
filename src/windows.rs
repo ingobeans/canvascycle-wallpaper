@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use std::path::PathBuf;
+
 use winapi::{
     DEFINE_GUID,
     shared::windef::{HDC, HMONITOR, HWND, LPRECT, POINT, RECT},
@@ -130,7 +132,7 @@ pub fn get_monitors() -> Vec<RECT> {
     rects
 }
 
-pub fn show_context_menu(hwnd: HWND, items: &[String]) {
+pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)]) {
     let mut cursor_pos = POINT { x: 0, y: 0 };
     unsafe { GetCursorPos(&mut cursor_pos) };
 
@@ -139,8 +141,8 @@ pub fn show_context_menu(hwnd: HWND, items: &[String]) {
     const CHANGE_WALLPAPER_OFFSET: usize = 100;
 
     let submenu = unsafe { CreatePopupMenu() };
-    for (index, item) in items.iter().enumerate() {
-        let utf16: Vec<u16> = item.encode_utf16().collect();
+    for (index, (name, path)) in items.iter().enumerate() {
+        let utf16: Vec<u16> = name.encode_utf16().collect();
         unsafe {
             AppendMenuW(
                 submenu,
@@ -180,6 +182,11 @@ pub fn show_context_menu(hwnd: HWND, items: &[String]) {
     match cmd as usize {
         EXIT => {
             println!("exit");
+        }
+        CHANGE_WALLPAPER_OFFSET.. => {
+            let index = cmd as usize - CHANGE_WALLPAPER_OFFSET;
+            let path = items[index].1.to_string_lossy();
+            println!("change-wallpaper{path}");
         }
         _ => {}
     }
