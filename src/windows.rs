@@ -2,10 +2,9 @@ use winapi::{
     shared::windef::HWND,
     um::winuser::{
         FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetClientRect, GetWindowLongPtrW,
-        HWND_BOTTOM, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SendMessageA, SetParent,
-        SetWindowLongPtrW, SetWindowPos, ShowWindow, WS_BORDER, WS_CAPTION, WS_CHILD,
-        WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU,
-        WS_THICKFRAME,
+        SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SendMessageA, SetParent, SetWindowLongPtrW,
+        SetWindowPos, ShowWindow, WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE,
+        WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
     },
 };
 
