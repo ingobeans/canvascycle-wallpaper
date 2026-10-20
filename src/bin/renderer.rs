@@ -80,7 +80,8 @@ pub fn parse_file_data(text: &str) -> CanvasCycleImage {
     data.unwrap()
 }
 
-fn main() {
+#[macroquad::main(window_conf)]
+async fn main() {
     let mut args = std::env::args().skip(1);
     let arg = args.next();
     let text = if let Some(arg) = arg {
@@ -96,7 +97,7 @@ fn main() {
         .next()
         .is_some_and(|a| a.as_str() == "-w" || a.as_str() == "--wallpaper");
 
-    let wallpaper = if wallpaper {
+    let as_wallpaper = if wallpaper {
         #[cfg(windows)]
         {
             let monitors = windows::get_monitors();
@@ -111,16 +112,12 @@ fn main() {
             })
         }
         #[cfg(not(windows))]
-        Some(())
+        None
     } else {
         None
     };
     let tray = args.next().is_some_and(|a| a.as_str() == "--tray");
 
-    macroquad::Window::from_config(window_conf(), show(data, wallpaper, tray));
-}
-
-pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>, tray: bool) {
     #[cfg(windows)]
     let hwnd;
     #[cfg(windows)]
@@ -196,7 +193,7 @@ pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>
                 if x == 3148524160 || x == 3137898496 {
                     println!("right click");
                     windows::show_context_menu(hwnd.unwrap());
-                } else if [1001040512, 3137898496, 3142372608, 990414848].contains(&x) {
+                } else if [1001040512, 3137898496, 3142372608, 990414848, 3205007497].contains(&x) {
                     // known but unhandled message ids
                 } else {
                     // unknown message ids
