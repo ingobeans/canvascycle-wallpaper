@@ -2,7 +2,7 @@
     all(target_os = "windows", not(debug_assertions),),
     windows_subsystem = "windows"
 )]
-use std::{path::PathBuf, time::Duration};
+use std::path::PathBuf;
 
 #[path = "../utils.rs"]
 pub mod utils;
@@ -38,7 +38,6 @@ fn main() {
         }
         let handle = handle.spawn().unwrap();
         handles.push(handle);
-        std::thread::sleep(Duration::from_millis(500));
     }
     println!("Wallpapers loaded!");
     for mut handle in handles {

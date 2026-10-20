@@ -13,7 +13,7 @@ use winapi::{
             SetForegroundWindow, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow,
             TPM_NONOTIFY, TPM_RETURNCMD, TrackPopupMenu, WM_MOUSEMOVE, WS_BORDER, WS_CAPTION,
             WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP,
-            WS_SYSMENU, WS_THICKFRAME,
+            WS_SYSMENU, WS_THICKFRAME, WS_VISIBLE,
         },
     },
 };
@@ -29,10 +29,7 @@ pub fn find_miniquad_window() -> Option<HWND> {
 }
 
 pub fn set_window_scaling() {
-    let result = unsafe { SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) };
-    if result != 0 {
-        eprintln!("Failed setting DPI awareness: {result}");
-    }
+    unsafe { SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) };
 }
 
 /// Const function that pads a bytestring with zeroes to become a fixed length
@@ -239,7 +236,8 @@ pub fn style_window_as_wallpaper(hwnd: HWND, wallpaper: &WallpaperOptions) {
         | WS_THICKFRAME
         | WS_MINIMIZEBOX
         | WS_MAXIMIZEBOX
-        | WS_SYSMENU);
+        | WS_SYSMENU
+        | WS_VISIBLE);
 
     let result = unsafe { SetWindowLongPtrW(hwnd, GWL_STYLE, style as isize) };
     if result == 0 {

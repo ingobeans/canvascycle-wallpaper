@@ -123,18 +123,17 @@ async fn main() {
     let hwnd;
     #[cfg(windows)]
     {
-        hwnd = windows::find_miniquad_window();
-        windows::set_window_scaling();
-        if (tray || as_wallpaper.is_some())
-            && let Some(hwnd) = hwnd
-        {
-            if tray {
-                windows::set_tray(hwnd);
-            }
+        // hwnd = windows::find_miniquad_window();
 
-            if let Some(wallpaper) = &as_wallpaper {
-                windows::style_window_as_wallpaper(hwnd, wallpaper);
-            }
+        use macroquad::miniquad::window::get_window_handle;
+        hwnd = get_window_handle().unwrap() as _;
+        windows::set_window_scaling();
+        if tray {
+            windows::set_tray(hwnd);
+        }
+
+        if let Some(wallpaper) = &as_wallpaper {
+            windows::style_window_as_wallpaper(hwnd, wallpaper);
         }
     }
 
@@ -193,7 +192,7 @@ async fn main() {
                 let y: u32 = mouse.y.to_bits();
                 if x == 3148524160 || x == 3137898496 {
                     println!("right click");
-                    windows::show_context_menu(hwnd.unwrap());
+                    windows::show_context_menu(hwnd);
                 } else if [1001040512, 3137898496, 3142372608, 990414848, 3205007497].contains(&x) {
                     // known but unhandled message ids
                 } else {
