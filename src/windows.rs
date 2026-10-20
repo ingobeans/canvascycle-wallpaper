@@ -139,7 +139,19 @@ pub fn show_context_menu(hwnd: HWND) {
 
     let menu = unsafe { CreatePopupMenu() };
 
-    unsafe { AppendMenuA(menu, MF_STRING, 1, c"waa".as_ptr().into()) };
+    const EXIT: usize = 1;
+    const RESTART: usize = 2;
+    const NEXT_WALLPAPER: usize = 3;
+    unsafe { AppendMenuA(menu, MF_STRING, EXIT, c"Exit".as_ptr().into()) };
+    unsafe { AppendMenuA(menu, MF_STRING, RESTART, c"Restart".as_ptr().into()) };
+    unsafe {
+        AppendMenuA(
+            menu,
+            MF_STRING,
+            NEXT_WALLPAPER,
+            c"Next Wallpaper".as_ptr().into(),
+        )
+    };
 
     unsafe { SetForegroundWindow(hwnd) };
 
@@ -154,7 +166,9 @@ pub fn show_context_menu(hwnd: HWND) {
             std::ptr::null(),
         )
     };
-    println!("cmd:{cmd}");
+    match cmd as usize {
+        _ => {}
+    }
 }
 
 /// Holy vibecoded
