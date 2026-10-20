@@ -44,6 +44,16 @@ pub fn style_window_as_wallpaper(hwnd: HWND) {
         eprintln!("Couldn't find Program Manager window");
     }
 
+    // https://dynamicwallpaper.readthedocs.io/en/docs/dev/make-wallpaper.html
+    let result = unsafe { SendMessageA(progman_hwnd, 0x052C, 0xD as _, 0 as _) };
+    if result != 0 {
+        eprintln!("Failed sending message 1: {result}")
+    }
+    let result = unsafe { SendMessageA(progman_hwnd, 0x052C, 0xD as _, 1 as _) };
+    if result != 0 {
+        eprintln!("Failed sending message 2: {result}")
+    }
+
     let defview = unsafe {
         FindWindowExA(
             progman_hwnd,
@@ -104,6 +114,7 @@ pub fn style_window_as_wallpaper(hwnd: HWND) {
             SWP_FRAMECHANGED | SWP_NOACTIVATE,
         ) == 0
     };
+    println!("{width}x{height}");
     if result {
         eprintln!("SetWindowPos failed");
         return;
