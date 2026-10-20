@@ -12,3 +12,12 @@ pub enum VerticalAlign {
     Middle,
     Bottom,
 }
+impl VerticalAlign {
+    pub fn from_index(index: usize) -> Self {
+        match index {
+            0 => Self::Top,
+            1 => Self::Middle,
+            _ => Self::Bottom,
+        }
+    }
+}

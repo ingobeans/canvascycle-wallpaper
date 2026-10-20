@@ -288,6 +288,12 @@ async fn main() {
                         zoom_level = zoom_value;
                     }
                 }
+                s if s.starts_with("align") => {
+                    let align_index = &s["align".len()..];
+                    if let Ok(align_index) = align_index.parse() {
+                        y_align = VerticalAlign::from_index(align_index);
+                    }
+                }
                 s if s.starts_with("change-wallpaper") => {
                     let new_file = &s["change-wallpaper".len()..];
                     data = read_image_data(&PathBuf::from(new_file));
