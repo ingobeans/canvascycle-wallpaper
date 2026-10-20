@@ -3,18 +3,16 @@ use winapi::{
     shared::windef::{HDC, HMONITOR, HWND, LPRECT, RECT},
     um::{
         shellapi::{
-            NIF_ICON, NIF_INFO, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, NOTIFYICONDATAA_u,
-            Shell_NotifyIconA,
+            NIF_ICON, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, NOTIFYICONDATAA_u, Shell_NotifyIconA,
         },
         shellscalingapi::{PROCESS_PER_MONITOR_DPI_AWARE, SetProcessDpiAwareness},
         winuser::{
             CreateIconFromResourceEx, EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE,
-            GWL_STYLE, GetWindowLongPtrW, HWND_BOTTOM, IMAGE_ICON, LR_DEFAULTCOLOR,
-            LR_LOADFROMFILE, LoadIconW, LoadImageW, LookupIconIdFromDirectoryEx, SW_SHOW,
-            SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SendMessageA, SetParent,
-            SetWindowLongPtrW, SetWindowPos, ShowWindow, WS_BORDER, WS_CAPTION, WS_CHILD,
-            WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU,
-            WS_THICKFRAME,
+            GWL_STYLE, GetWindowLongPtrW, HWND_BOTTOM, LR_DEFAULTCOLOR,
+            LookupIconIdFromDirectoryEx, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE,
+            SWP_NOSIZE, SendMessageA, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow,
+            WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX,
+            WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
         },
     },
 };
