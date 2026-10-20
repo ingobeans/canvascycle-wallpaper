@@ -1,13 +1,11 @@
 use winapi::{
     shared::windef::HWND,
     um::winuser::{
-        EnumWindows, FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetClientRect,
-        GetWindowLongPtrW, HWND_BOTTOM, LWA_ALPHA, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE,
-        SendMessageA, SetLayeredWindowAttributes, SetParent, SetWindowLongPtrW, SetWindowPos,
-        ShowWindow, WNDENUMPROC, WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_APPWINDOW,
-        WS_EX_CLIENTEDGE, WS_EX_COMPOSITED, WS_EX_DLGMODALFRAME, WS_EX_LAYERED, WS_EX_NOACTIVATE,
-        WS_EX_STATICEDGE, WS_EX_TOOLWINDOW, WS_EX_WINDOWEDGE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX,
-        WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
+        FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetClientRect, GetWindowLongPtrW,
+        HWND_BOTTOM, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SendMessageA, SetParent,
+        SetWindowLongPtrW, SetWindowPos, ShowWindow, WS_BORDER, WS_CAPTION, WS_CHILD,
+        WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU,
+        WS_THICKFRAME,
     },
 };
 
@@ -58,7 +56,7 @@ pub fn style_window_as_wallpaper(hwnd: HWND) {
         FindWindowExA(
             progman_hwnd,
             std::ptr::null_mut(),
-            b"SHELLDLL_DefView\0".as_ptr().cast(),
+            c"SHELLDLL_DefView".as_ptr().cast(),
             std::ptr::null(),
         )
     };
