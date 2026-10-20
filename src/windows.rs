@@ -10,12 +10,13 @@ use winapi::{
         winuser::{
             AppendMenuA, AppendMenuW, CreateIconFromResourceEx, CreatePopupMenu,
             EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetCursorPos,
-            GetWindowLongPtrW, HWND_BOTTOM, LR_DEFAULTCOLOR, LookupIconIdFromDirectoryEx, MF_POPUP,
-            MF_STRING, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
-            SendMessageA, SetForegroundWindow, SetParent, SetWindowLongPtrW, SetWindowPos,
-            ShowWindow, TPM_NONOTIFY, TPM_RETURNCMD, TrackPopupMenu, WM_MOUSEMOVE, WS_BORDER,
-            WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX,
-            WS_POPUP, WS_SYSMENU, WS_THICKFRAME, WS_VISIBLE,
+            GetWindowLongPtrW, HWND_BOTTOM, LR_DEFAULTCOLOR, LookupIconIdFromDirectoryEx,
+            MF_DISABLED, MF_POPUP, MF_SEPARATOR, MF_STRING, SW_SHOW, SWP_FRAMECHANGED,
+            SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SendMessageA, SetForegroundWindow, SetParent,
+            SetWindowLongPtrW, SetWindowPos, ShowWindow, TPM_NONOTIFY, TPM_RETURNCMD,
+            TrackPopupMenu, WM_MOUSEMOVE, WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED,
+            WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
+            WS_VISIBLE,
         },
     },
 };
@@ -138,6 +139,8 @@ pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)]) {
 
     const EXIT: usize = 1;
     const RESTART: usize = 2;
+    const ZOOM_PLUS: usize = 3;
+    const ZOOM_MINUS: usize = 4;
     const CHANGE_WALLPAPER_OFFSET: usize = 100;
 
     let submenu = unsafe { CreatePopupMenu() };
@@ -157,6 +160,22 @@ pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)]) {
 
     unsafe { AppendMenuA(menu, MF_STRING, EXIT, c"Exit".as_ptr()) };
     unsafe { AppendMenuA(menu, MF_STRING, RESTART, c"Restart".as_ptr()) };
+
+    unsafe { AppendMenuA(menu, MF_SEPARATOR, 0, std::ptr::null()) };
+
+    unsafe {
+        AppendMenuA(
+            menu,
+            MF_STRING | MF_DISABLED,
+            ZOOM_PLUS,
+            c"Current Zoom Level: 100%".as_ptr(),
+        )
+    };
+    unsafe { AppendMenuA(menu, MF_STRING, ZOOM_PLUS, c"Zoom In".as_ptr()) };
+    unsafe { AppendMenuA(menu, MF_STRING, ZOOM_MINUS, c"Zoom Out".as_ptr()) };
+
+    unsafe { AppendMenuA(menu, MF_SEPARATOR, 0, std::ptr::null()) };
+
     unsafe {
         AppendMenuA(
             menu,
