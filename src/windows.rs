@@ -2,9 +2,10 @@ use winapi::{
     shared::windef::HWND,
     um::winuser::{
         FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetClientRect, GetWindowLongPtrW,
-        SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SendMessageA, SetParent, SetWindowLongPtrW,
-        SetWindowPos, ShowWindow, WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE,
-        WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
+        HWND_BOTTOM, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+        SendMessageA, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow, WS_BORDER,
+        WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX,
+        WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
     },
 };
 
@@ -20,6 +21,20 @@ pub fn find_miniquad_window() -> Option<HWND> {
 ///
 /// Even god's mightiest soldiers have their limits. (mine are debugging undocumented windows APIs for over 3 hours and its already 2 am)
 pub fn style_window_as_wallpaper(hwnd: HWND) {
+    let result = unsafe {
+        SetWindowPos(
+            hwnd,
+            HWND_BOTTOM,
+            0,
+            0,
+            0,
+            0,
+            SWP_FRAMECHANGED | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE,
+        )
+    };
+    if result == 0 {
+        eprintln!("Failed setting window as always on bottom");
+    }
     let progman_hwnd = unsafe { FindWindowA(c"Progman".as_ptr().cast(), std::ptr::null()) };
     if progman_hwnd as usize == 0 {
         eprintln!("Couldn't find Program Manager window");
