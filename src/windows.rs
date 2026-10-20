@@ -1,13 +1,13 @@
 use winapi::{
-    shared::windef::HWND,
+    shared::windef::{HDC, HMONITOR, HWND, LPRECT, RECT},
     um::{
         shellscalingapi::{PROCESS_PER_MONITOR_DPI_AWARE, SetProcessDpiAwareness},
         winuser::{
-            FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetClientRect, GetWindowLongPtrW,
-            HWND_BOTTOM, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
-            SendMessageA, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow, WS_BORDER,
-            WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX,
-            WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
+            EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE,
+            GetWindowLongPtrW, HWND_BOTTOM, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE,
+            SWP_NOSIZE, SendMessageA, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow,
+            WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX,
+            WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
         },
     },
 };
@@ -27,10 +27,46 @@ pub fn set_window_scaling() {
     }
 }
 
+fn get_monitors() -> Vec<RECT> {
+    unsafe extern "system" fn enum_callback(
+        hmon: HMONITOR,
+        _hdc: HDC,
+        rect: LPRECT,
+        param: isize,
+    ) -> i32 {
+        unsafe {
+            println!(
+                "monitor found: hmon:{hmon:?}, rect:({},{}),({},{})",
+                (*rect).left,
+                (*rect).right,
+                (*rect).top,
+                (*rect).bottom
+            );
+        }
+        let rects: *mut Vec<RECT> = param as _;
+        unsafe {
+            (*rects).push(*rect);
+        }
+
+        1
+    }
+    let mut rects: Vec<RECT> = Vec::new();
+    unsafe {
+        EnumDisplayMonitors(
+            std::ptr::null_mut(),
+            std::ptr::null(),
+            Some(enum_callback),
+            &mut rects as *mut _ as _,
+        )
+    };
+    rects
+}
+
 /// Holy vibecoded
 ///
 /// Even god's mightiest soldiers have their limits. (mine are debugging undocumented windows APIs for over 3 hours and its already 2 am)
 pub fn style_window_as_wallpaper(hwnd: HWND) {
+    let monitors = get_monitors();
     let result = unsafe {
         SetWindowPos(
             hwnd,
@@ -99,22 +135,35 @@ pub fn style_window_as_wallpaper(hwnd: HWND) {
         eprintln!("Failed to set parent.");
     }
 
-    let mut rect = unsafe { std::mem::zeroed() };
+    let rect = monitors[0];
 
-    if unsafe { GetClientRect(progman_hwnd, &mut rect) == 0 } {
-        eprintln!("GetClientRect failed");
-        return;
+    let mut smallest_left = monitors[0].left;
+    let mut smallest_top = monitors[0].top;
+    for rect in &monitors {
+        if rect.left < smallest_left {
+            smallest_left = rect.left;
+        }
+        if rect.top < smallest_top {
+            smallest_top = rect.top;
+        }
     }
 
     let width = rect.right - rect.left;
     let height = rect.bottom - rect.top;
 
+    // need to be offset, since the client area of the desktop has 0,0 as the top left position,
+    // while monitor rects i believe are relative to the primary monitor,
+    // so a monitor to the left of the primary would for instance have the position -1920, 0,
+    // which needs to be 0,0
+    let left = rect.left - smallest_left;
+    let top = rect.top - smallest_top;
+
     let result = unsafe {
         SetWindowPos(
             hwnd,
             defview,
-            0,
-            0,
+            left,
+            top,
             width,
             height,
             SWP_FRAMECHANGED | SWP_NOACTIVATE,
