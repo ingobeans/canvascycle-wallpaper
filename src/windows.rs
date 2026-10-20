@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use winapi::{
     DEFINE_GUID,
-    shared::windef::{HDC, HMONITOR, HWND, LPRECT, POINT, RECT},
+    shared::windef::{HDC, HMENU, HMONITOR, HWND, LPRECT, POINT, RECT},
     um::{
         shellapi::{NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, Shell_NotifyIconA},
         shellscalingapi::{PROCESS_PER_MONITOR_DPI_AWARE, SetProcessDpiAwareness},
@@ -133,28 +133,78 @@ pub fn get_monitors() -> Vec<RECT> {
     rects
 }
 
+const EXIT: usize = 1;
+const RESTART: usize = 2;
+
+const ZOOM_PLUS: usize = 3;
+const ZOOM_MINUS: usize = 4;
+
+const ALIGN_TOP: usize = 5;
+const ALIGN_MIDDLE: usize = 6;
+const ALIGN_BOTTOM: usize = 7;
+
+fn create_vertical_align_submenu(active_vertical_align: VerticalAlign) -> HMENU {
+    let vertical_align_submenu = unsafe { CreatePopupMenu() };
+    unsafe {
+        AppendMenuA(
+            vertical_align_submenu,
+            MF_STRING
+                | if matches!(active_vertical_align, VerticalAlign::Top) {
+                    MF_CHECKED
+                } else {
+                    0
+                },
+            ALIGN_TOP,
+            c"Top".as_ptr(),
+        )
+    };
+    unsafe {
+        AppendMenuA(
+            vertical_align_submenu,
+            MF_STRING
+                | if matches!(active_vertical_align, VerticalAlign::Middle) {
+                    MF_CHECKED
+                } else {
+                    0
+                },
+            ALIGN_MIDDLE,
+            c"Middle".as_ptr(),
+        )
+    };
+    unsafe {
+        AppendMenuA(
+            vertical_align_submenu,
+            MF_STRING
+                | if matches!(active_vertical_align, VerticalAlign::Bottom) {
+                    MF_CHECKED
+                } else {
+                    0
+                },
+            ALIGN_BOTTOM,
+            c"Bottom".as_ptr(),
+        )
+    };
+    vertical_align_submenu
+}
+
 pub fn show_context_menu(
     hwnd: HWND,
     items: &[(String, PathBuf)],
     active_name: &str,
+    active_vertical_align: VerticalAlign,
     mut zoom_level: i16,
 ) {
     let mut cursor_pos = POINT { x: 0, y: 0 };
     unsafe { GetCursorPos(&mut cursor_pos) };
-
-    const EXIT: usize = 1;
-    const RESTART: usize = 2;
-    const ZOOM_PLUS: usize = 3;
-    const ZOOM_MINUS: usize = 4;
     const CHANGE_WALLPAPER_OFFSET: usize = 100;
 
-    let submenu = unsafe { CreatePopupMenu() };
+    let wallpaper_submenu = unsafe { CreatePopupMenu() };
     for (index, (name, _)) in items.iter().enumerate() {
         let utf16: Vec<u16> = name.encode_utf16().collect();
         let active = name == active_name;
         unsafe {
             AppendMenuW(
-                submenu,
+                wallpaper_submenu,
                 if active {
                     MF_STRING | MF_CHECKED
                 } else {
@@ -180,11 +230,23 @@ pub fn show_context_menu(
 
     unsafe { AppendMenuA(menu, MF_SEPARATOR, 0, std::ptr::null()) };
 
+    let vertical_align_submenu = create_vertical_align_submenu(active_vertical_align);
     unsafe {
         AppendMenuA(
             menu,
             MF_STRING | MF_POPUP,
-            submenu as usize,
+            vertical_align_submenu as usize,
+            c"Verical Align".as_ptr(),
+        )
+    };
+
+    unsafe { AppendMenuA(menu, MF_SEPARATOR, 0, std::ptr::null()) };
+
+    unsafe {
+        AppendMenuA(
+            menu,
+            MF_STRING | MF_POPUP,
+            wallpaper_submenu as usize,
             c"Change Wallpaper".as_ptr(),
         )
     };

@@ -5,6 +5,7 @@ use std::{
     sync::mpsc::{self, Receiver},
 };
 
+use crate::utils::VerticalAlign;
 #[cfg(windows)]
 use crate::utils::WallpaperOptions;
 use macroquad::{miniquad::window::screen_size, prelude::*};
@@ -247,6 +248,9 @@ async fn main() {
 
     let mut zoom_level = 100;
 
+    #[allow(unused_mut)]
+    let mut y_align = VerticalAlign::Middle;
+
     // main loop
     loop {
         #[cfg(windows)]
@@ -256,7 +260,13 @@ async fn main() {
                 let x: u32 = mouse.x.to_bits();
                 let _y: u32 = mouse.y.to_bits();
                 if x == 3148524160 || x == 3137898496 {
-                    windows::show_context_menu(hwnd, &image_list, &active_name, zoom_level);
+                    windows::show_context_menu(
+                        hwnd,
+                        &image_list,
+                        &active_name,
+                        y_align,
+                        zoom_level,
+                    );
                 } else if [1001040512, 3137898496, 3142372608, 990414848, 3205007497].contains(&x) {
                     // known but unhandled message ids
                 } else {
@@ -352,7 +362,11 @@ async fn main() {
         let dest_width = data.width as f32 * scale_factor;
         let dest_height = data.height as f32 * scale_factor;
         let x_offset = (width - dest_width) / 2.0;
-        let y_offset = (height - dest_height) / 2.0;
+        let y_offset = match y_align {
+            VerticalAlign::Top => 0.0,
+            VerticalAlign::Middle => (height - dest_height) / 2.0,
+            VerticalAlign::Bottom => height - dest_height,
+        };
         draw_texture_ex(
             &texture,
             x_offset,

@@ -4,3 +4,11 @@ pub struct WallpaperOptions {
     pub right: i32,
     pub bottom: i32,
 }
+
+#[allow(dead_code)]
+#[derive(Clone, Copy)]
+pub enum VerticalAlign {
+    Top,
+    Middle,
+    Bottom,
+}
