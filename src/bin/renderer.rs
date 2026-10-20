@@ -317,7 +317,15 @@ async fn main() {
         }
         texture.update(&image);
 
-        let (width, height) = screen_size();
+        let (mut width, mut height) = screen_size();
+        #[cfg(not(windows))]
+        {
+            // windows handles scaling differently so this isnt needed
+            let scale = screen_dpi_scale();
+            width /= scale;
+            height /= scale;
+        }
+
         let mut scale_factor = (width / data.width as f32).min(height / data.height as f32);
         if integer_scaling {
             scale_factor = scale_factor.floor();
