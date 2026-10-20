@@ -5,6 +5,7 @@ use std::{
     sync::mpsc::{self, Receiver},
 };
 
+#[cfg(windows)]
 use crate::utils::WallpaperOptions;
 use macroquad::{miniquad::window::screen_size, prelude::*};
 use regex::Regex;
@@ -158,31 +159,29 @@ async fn main() {
     let stdin_rx = start_stdin_channel();
     let mut data = read_image_data(&path);
 
+    #[allow(unused_variables)]
     let wallpaper = args
         .next()
         .is_some_and(|a| a.as_str() == "-w" || a.as_str() == "--wallpaper");
 
-    let as_wallpaper = if wallpaper {
-        #[cfg(windows)]
-        {
-            let monitors = windows::get_monitors();
-            let monitor_index: usize = args.next().and_then(|a| a.parse().ok()).unwrap_or_default();
-            let monitor = monitors[monitor_index];
+    #[cfg(windows)]
+    let as_wallpaper: Option<WallpaperOptions> = if wallpaper {
+        let monitors = windows::get_monitors();
+        let monitor_index: usize = args.next().and_then(|a| a.parse().ok()).unwrap_or_default();
+        let monitor = monitors[monitor_index];
 
-            Some(WallpaperOptions {
-                left: monitor.left,
-                top: monitor.top,
-                right: monitor.right,
-                bottom: monitor.bottom,
-            })
-        }
-        #[cfg(not(windows))]
-        None
+        Some(WallpaperOptions {
+            left: monitor.left,
+            top: monitor.top,
+            right: monitor.right,
+            bottom: monitor.bottom,
+        })
     } else {
         None
     };
     let tray = args.next().is_some_and(|a| a.as_str() == "--tray");
 
+    #[allow(unused_variables)]
     // List of all images in the directory of the loaded image.
     // Only loaded for the primary window (i.e. the one with --tray).
     let image_list = if tray {
