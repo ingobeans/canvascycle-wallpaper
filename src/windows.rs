@@ -148,21 +148,21 @@ pub fn show_context_menu(hwnd: HWND) {
                 submenu,
                 MF_STRING,
                 CHANGE_WALLPAPER_OFFSET + index,
-                item.as_ptr().into(),
+                item.as_ptr(),
             )
         };
     }
 
     let menu = unsafe { CreatePopupMenu() };
 
-    unsafe { AppendMenuA(menu, MF_STRING, EXIT, c"Exit".as_ptr().into()) };
-    unsafe { AppendMenuA(menu, MF_STRING, RESTART, c"Restart".as_ptr().into()) };
+    unsafe { AppendMenuA(menu, MF_STRING, EXIT, c"Exit".as_ptr()) };
+    unsafe { AppendMenuA(menu, MF_STRING, RESTART, c"Restart".as_ptr()) };
     unsafe {
         AppendMenuA(
             menu,
             MF_STRING | MF_POPUP,
             submenu as usize,
-            c"Next Wallpaper".as_ptr().into(),
+            c"Next Wallpaper".as_ptr(),
         )
     };
 

@@ -1,7 +1,6 @@
 use std::{
     collections::{HashMap, hash_map::Entry},
     hash::Hash,
-    io::Read,
     sync::mpsc::{self, Receiver},
 };
 
@@ -86,7 +85,7 @@ pub fn parse_file_data(text: &str) -> CanvasCycleImage {
 fn start_stdin_channel() -> Receiver<String> {
     let (tx, rx) = mpsc::channel();
     std::thread::spawn(move || {
-        let mut stdin = std::io::stdin();
+        let stdin = std::io::stdin();
         loop {
             let mut buf = String::new();
             stdin.read_line(&mut buf).unwrap();
