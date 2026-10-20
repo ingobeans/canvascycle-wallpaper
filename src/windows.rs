@@ -1,11 +1,14 @@
 use winapi::{
     shared::windef::HWND,
-    um::winuser::{
-        FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetClientRect, GetWindowLongPtrW,
-        HWND_BOTTOM, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
-        SendMessageA, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow, WS_BORDER,
-        WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX,
-        WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
+    um::{
+        shellscalingapi::{PROCESS_PER_MONITOR_DPI_AWARE, SetProcessDpiAwareness},
+        winuser::{
+            FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetClientRect, GetWindowLongPtrW,
+            HWND_BOTTOM, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+            SendMessageA, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow, WS_BORDER,
+            WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX,
+            WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
+        },
     },
 };
 
@@ -15,6 +18,13 @@ pub fn find_miniquad_window() -> Option<HWND> {
         return None;
     }
     Some(result)
+}
+
+pub fn set_window_scaling() {
+    let result = unsafe { SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) };
+    if result != 0 {
+        eprintln!("Failed setting DPI awareness: {result}");
+    }
 }
 
 /// Holy vibecoded

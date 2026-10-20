@@ -84,6 +84,7 @@ async fn main() {
 
     #[cfg(windows)]
     {
+        windows::set_window_scaling();
         let wallpaper = args
             .next()
             .is_some_and(|a| a.as_str() == "-w" || a.as_str() == "--wallpaper");
