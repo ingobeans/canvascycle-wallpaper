@@ -6,14 +6,14 @@ use winapi::{
         shellapi::{NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, Shell_NotifyIconA},
         shellscalingapi::{PROCESS_PER_MONITOR_DPI_AWARE, SetProcessDpiAwareness},
         winuser::{
-            AppendMenuA, CreateIconFromResourceEx, CreatePopupMenu, EnumDisplayMonitors,
-            FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetCursorPos, GetWindowLongPtrW,
-            HWND_BOTTOM, LR_DEFAULTCOLOR, LookupIconIdFromDirectoryEx, MF_POPUP, MF_STRING,
-            SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SendMessageA,
-            SetForegroundWindow, SetParent, SetWindowLongPtrW, SetWindowPos, ShowWindow,
-            TPM_NONOTIFY, TPM_RETURNCMD, TrackPopupMenu, WM_MOUSEMOVE, WS_BORDER, WS_CAPTION,
-            WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP,
-            WS_SYSMENU, WS_THICKFRAME, WS_VISIBLE,
+            AppendMenuA, AppendMenuW, CreateIconFromResourceEx, CreatePopupMenu,
+            EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetCursorPos,
+            GetWindowLongPtrW, HWND_BOTTOM, LR_DEFAULTCOLOR, LookupIconIdFromDirectoryEx, MF_POPUP,
+            MF_STRING, SW_SHOW, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+            SendMessageA, SetForegroundWindow, SetParent, SetWindowLongPtrW, SetWindowPos,
+            ShowWindow, TPM_NONOTIFY, TPM_RETURNCMD, TrackPopupMenu, WM_MOUSEMOVE, WS_BORDER,
+            WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX,
+            WS_POPUP, WS_SYSMENU, WS_THICKFRAME, WS_VISIBLE,
         },
     },
 };
@@ -130,7 +130,7 @@ pub fn get_monitors() -> Vec<RECT> {
     rects
 }
 
-pub fn show_context_menu(hwnd: HWND) {
+pub fn show_context_menu(hwnd: HWND, items: &[String]) {
     let mut cursor_pos = POINT { x: 0, y: 0 };
     unsafe { GetCursorPos(&mut cursor_pos) };
 
@@ -139,16 +139,14 @@ pub fn show_context_menu(hwnd: HWND) {
     const CHANGE_WALLPAPER_OFFSET: usize = 100;
 
     let submenu = unsafe { CreatePopupMenu() };
-    for (index, item) in [c"example", c"placeholder", c"thgingy", c"image"]
-        .iter()
-        .enumerate()
-    {
+    for (index, item) in items.iter().enumerate() {
+        let utf16: Vec<u16> = item.encode_utf16().collect();
         unsafe {
-            AppendMenuA(
+            AppendMenuW(
                 submenu,
                 MF_STRING,
                 CHANGE_WALLPAPER_OFFSET + index,
-                item.as_ptr(),
+                utf16.as_ptr() as _,
             )
         };
     }
@@ -162,7 +160,7 @@ pub fn show_context_menu(hwnd: HWND) {
             menu,
             MF_STRING | MF_POPUP,
             submenu as usize,
-            c"Next Wallpaper".as_ptr(),
+            c"Change Wallpaper".as_ptr(),
         )
     };
 

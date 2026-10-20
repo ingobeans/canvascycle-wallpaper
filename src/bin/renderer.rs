@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, hash_map::Entry},
     hash::Hash,
+    path::PathBuf,
     sync::mpsc::{self, Receiver},
 };
 
@@ -102,11 +103,12 @@ fn start_stdin_channel() -> Receiver<String> {
 async fn main() {
     let mut args = std::env::args().skip(1);
     let arg = args.next();
-    let text = if let Some(arg) = arg {
-        std::fs::read_to_string(arg.as_str())
+    let path = if let Some(arg) = arg {
+        PathBuf::from(arg)
     } else {
-        std::fs::read_to_string("data/images/TESTRAMP.LBM.json")
+        PathBuf::from("data/images/TESTRAMP.LBM.json")
     };
+    let text = std::fs::read_to_string(&path);
     let stdin_rx = start_stdin_channel();
 
     let text = text.unwrap();
@@ -136,6 +138,29 @@ async fn main() {
         None
     };
     let tray = args.next().is_some_and(|a| a.as_str() == "--tray");
+
+    // List of all images in the directory of the loaded image.
+    // Only loaded for the primary window (i.e. the one with --tray).
+    let image_list = if tray {
+        let parent = path.parent().unwrap();
+        let mut entries = Vec::new();
+        for item in std::fs::read_dir(parent).unwrap().flatten() {
+            if item.file_type().unwrap().is_dir() {
+                continue;
+            }
+            let name = item.file_name();
+            let name = name.to_string_lossy();
+            let Some((name, _ext)) = name.split_once(".") else {
+                continue;
+            };
+            let mut name = name.to_string();
+            name.push('\x00');
+            entries.push(name);
+        }
+        entries
+    } else {
+        Vec::new()
+    };
 
     #[cfg(windows)]
     let hwnd;
@@ -211,7 +236,7 @@ async fn main() {
                 let x: u32 = mouse.x.to_bits();
                 let _y: u32 = mouse.y.to_bits();
                 if x == 3148524160 || x == 3137898496 {
-                    windows::show_context_menu(hwnd);
+                    windows::show_context_menu(hwnd, &image_list);
                 } else if [1001040512, 3137898496, 3142372608, 990414848, 3205007497].contains(&x) {
                     // known but unhandled message ids
                 } else {
