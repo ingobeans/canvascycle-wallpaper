@@ -1,6 +1,10 @@
 use winapi::{
+    DEFINE_GUID,
     shared::windef::{HDC, HMONITOR, HWND, LPRECT, RECT},
     um::{
+        shellapi::{
+            NIF_INFO, NIF_TIP, NIM_ADD, NOTIFYICONDATAA, NOTIFYICONDATAA_u, Shell_NotifyIconA,
+        },
         shellscalingapi::{PROCESS_PER_MONITOR_DPI_AWARE, SetProcessDpiAwareness},
         winuser::{
             EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE,
@@ -24,6 +28,43 @@ pub fn set_window_scaling() {
     let result = unsafe { SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) };
     if result != 0 {
         eprintln!("Failed setting DPI awareness: {result}");
+    }
+}
+
+/// Const function that pads a bytestring with zeroes to become a fixed length
+const fn fixed_length_str<const N: usize, const A: usize>(text: &[u8; A]) -> [i8; N] {
+    assert!(N > A);
+    let mut a = [0; N];
+    let ptr = &mut a as *mut _ as *mut [u8; A];
+    unsafe { *ptr = *text };
+    a
+}
+
+pub fn set_tray(hwnd: HWND) {
+    DEFINE_GUID! {GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    let sz_info = fixed_length_str(b"Pixedwall");
+    let sz_info_title = fixed_length_str(b"Pixedwall");
+    let sz_tip = fixed_length_str(b"Pixedwall");
+    let mut data = NOTIFYICONDATAA {
+        cbSize: size_of::<NOTIFYICONDATAA>() as _,
+        hWnd: hwnd,
+        dwInfoFlags: 0,
+        uCallbackMessage: 0,
+        hIcon: std::ptr::null_mut(),
+        dwState: 0,
+        dwStateMask: 0,
+        szInfo: sz_info,
+        szInfoTitle: sz_info_title,
+        uID: 0,
+        uFlags: NIF_INFO | NIF_TIP,
+        szTip: sz_tip,
+        u: unsafe { *(&[0] as *const _ as *const NOTIFYICONDATAA_u) },
+        guidItem: GUID_NULL,
+        hBalloonIcon: std::ptr::null_mut(),
+    };
+    let result = unsafe { Shell_NotifyIconA(NIM_ADD, &mut data) };
+    if result != 1 {
+        eprintln!("Couldn't add tray icon");
     }
 }
 

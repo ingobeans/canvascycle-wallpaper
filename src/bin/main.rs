@@ -13,6 +13,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 #[cfg(windows)]
+#[path = "../windows.rs"]
 mod windows;
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
@@ -88,9 +89,12 @@ async fn main() {
         let wallpaper = args
             .next()
             .is_some_and(|a| a.as_str() == "-w" || a.as_str() == "--wallpaper");
-        if wallpaper && let Some(hwnd) = windows::find_miniquad_window() {
-            println!("hwnd found!");
-            windows::style_window_as_wallpaper(hwnd);
+        if let Some(hwnd) = windows::find_miniquad_window() {
+            windows::set_tray(hwnd);
+            if wallpaper {
+                println!("hwnd found!");
+                windows::style_window_as_wallpaper(hwnd);
+            }
         }
     }
 
