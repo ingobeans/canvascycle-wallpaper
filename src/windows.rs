@@ -180,6 +180,9 @@ pub fn show_context_menu(hwnd: HWND) {
         )
     };
     match cmd as usize {
+        EXIT => {
+            println!("exit");
+        }
         _ => {}
     }
 }

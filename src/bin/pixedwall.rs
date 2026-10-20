@@ -2,7 +2,7 @@
     all(target_os = "windows", not(debug_assertions),),
     windows_subsystem = "windows"
 )]
-use std::path::PathBuf;
+use std::{io::Read, path::PathBuf, process::Stdio};
 
 #[path = "../utils.rs"]
 pub mod utils;
@@ -29,18 +29,67 @@ fn main() {
     let monitors = windows::get_monitors();
     println!("{} monitors found.", monitors.len());
 
-    let mut handles = Vec::new();
+    #[allow(invalid_value)]
+    // first window spawned is the primary window.
+    // handles tray and messaging.
+    // it can send messages by writing to stdout,
+    // and data can be sent to it through stdin.
+    let mut primary = unsafe { std::mem::MaybeUninit::uninit().assume_init() };
+
+    let mut seconday_handles = Vec::new();
     for i in 0..monitors.len() {
         let mut command = std::process::Command::new(&renderer);
-        let mut handle = command.arg(&path).arg("-w").arg(i.to_string());
+        let mut handle = command
+            .arg(&path)
+            .arg("-w")
+            .arg(i.to_string())
+            .stdin(Stdio::piped());
+
         if i == 0 {
-            handle = handle.arg("--tray");
+            handle = handle.arg("--tray").stdout(Stdio::piped());
         }
-        let handle = handle.spawn().unwrap();
-        handles.push(handle);
+
+        let mut handle = handle.spawn().unwrap();
+
+        if i == 0 {
+            primary = handle;
+        } else {
+            let stdin = handle.stdin.take().unwrap();
+            seconday_handles.push((handle, stdin));
+        }
     }
     println!("Wallpapers loaded!");
-    for mut handle in handles {
+
+    let mut primary_stdout = primary.stdout.take().unwrap();
+    let mut current_message = Vec::new();
+    let mut buf = [0];
+    loop {
+        if primary_stdout.read_exact(&mut buf).is_err() {
+            break;
+        }
+        if buf[0] == b'\n' {
+            // pop current_message
+
+            println!(
+                "received message from primary: {:?}",
+                String::from_utf8_lossy(&current_message)
+            );
+            match &current_message[..] {
+                b"exit" => {
+                    println!("Exit received!");
+                }
+                _ => {
+                    eprintln!("Unknown message.");
+                }
+            }
+
+            current_message.clear();
+        } else {
+            current_message.push(buf[0]);
+        }
+    }
+
+    for (mut handle, _) in seconday_handles {
         let _ = handle.wait();
     }
 }
