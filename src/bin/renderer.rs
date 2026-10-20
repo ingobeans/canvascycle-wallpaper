@@ -237,6 +237,8 @@ async fn main() {
 
     let mut fullscreen = false;
 
+    let mut zoom_level = 100;
+
     // main loop
     loop {
         #[cfg(windows)]
@@ -246,7 +248,7 @@ async fn main() {
                 let x: u32 = mouse.x.to_bits();
                 let _y: u32 = mouse.y.to_bits();
                 if x == 3148524160 || x == 3137898496 {
-                    windows::show_context_menu(hwnd, &image_list);
+                    windows::show_context_menu(hwnd, &image_list, zoom_level);
                 } else if [1001040512, 3137898496, 3142372608, 990414848, 3205007497].contains(&x) {
                     // known but unhandled message ids
                 } else {
@@ -261,6 +263,12 @@ async fn main() {
             match value.trim() {
                 "exit" => {
                     break;
+                }
+                s if s.starts_with("zoom") => {
+                    let zoom_value = &s["zoom".len()..];
+                    if let Ok(zoom_value) = zoom_value.parse() {
+                        zoom_level = zoom_value;
+                    }
                 }
                 s if s.starts_with("change-wallpaper") => {
                     let new_file = &s["change-wallpaper".len()..];
@@ -328,6 +336,7 @@ async fn main() {
         }
 
         let mut scale_factor = (width / data.width as f32).min(height / data.height as f32);
+        scale_factor *= zoom_level as f32 / 100.0;
         if integer_scaling {
             scale_factor = scale_factor.floor();
         }

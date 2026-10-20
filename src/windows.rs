@@ -133,7 +133,7 @@ pub fn get_monitors() -> Vec<RECT> {
     rects
 }
 
-pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)]) {
+pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)], mut zoom_level: i16) {
     let mut cursor_pos = POINT { x: 0, y: 0 };
     unsafe { GetCursorPos(&mut cursor_pos) };
 
@@ -163,14 +163,8 @@ pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)]) {
 
     unsafe { AppendMenuA(menu, MF_SEPARATOR, 0, std::ptr::null()) };
 
-    unsafe {
-        AppendMenuA(
-            menu,
-            MF_STRING | MF_DISABLED,
-            ZOOM_PLUS,
-            c"Current Zoom Level: 100%".as_ptr(),
-        )
-    };
+    let text = format!("Current Zoom Level: {}%\x00", zoom_level);
+    unsafe { AppendMenuA(menu, MF_STRING | MF_DISABLED, ZOOM_PLUS, text.as_ptr() as _) };
     unsafe { AppendMenuA(menu, MF_STRING, ZOOM_PLUS, c"Zoom In".as_ptr()) };
     unsafe { AppendMenuA(menu, MF_STRING, ZOOM_MINUS, c"Zoom Out".as_ptr()) };
 
@@ -206,6 +200,11 @@ pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)]) {
             let index = cmd as usize - CHANGE_WALLPAPER_OFFSET;
             let path = items[index].1.to_string_lossy();
             println!("change-wallpaper{path}");
+        }
+        ZOOM_PLUS | ZOOM_MINUS => {
+            let amt = if cmd as usize == ZOOM_PLUS { 20 } else { -20 };
+            zoom_level += amt;
+            println!("zoom{zoom_level}");
         }
         _ => {}
     }
