@@ -317,6 +317,7 @@ async fn main() {
         }
         texture.update(&image);
 
+        #[allow(unused_mut)]
         let (mut width, mut height) = screen_size();
         #[cfg(not(windows))]
         {
