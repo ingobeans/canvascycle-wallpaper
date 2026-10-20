@@ -10,8 +10,7 @@ use winapi::{
 };
 
 pub fn find_miniquad_window() -> Option<HWND> {
-    let classname = "MINIQUADAPP\x00";
-    let result = unsafe { FindWindowA(classname as *const str as _, std::ptr::null()) };
+    let result = unsafe { FindWindowA(c"MINIQUADAPP".as_ptr().cast(), std::ptr::null()) };
     if result as usize == 0 {
         return None;
     }
@@ -37,7 +36,7 @@ pub fn style_window_as_wallpaper(hwnd: HWND) {
         eprintln!("Failed setting window as always on bottom");
     }
 
-    let progman_hwnd = unsafe { FindWindowA("Progman\x00" as *const str as _, std::ptr::null()) };
+    let progman_hwnd = unsafe { FindWindowA(c"Progman".as_ptr().cast(), std::ptr::null()) };
     if progman_hwnd as usize == 0 {
         eprintln!("Couldn't find Program Manager window");
     }
