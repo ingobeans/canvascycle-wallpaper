@@ -21,21 +21,6 @@ pub fn find_miniquad_window() -> Option<HWND> {
 ///
 /// Even god's mightiest soldiers have their limits. (mine are debugging undocumented windows APIs for over 3 hours and its already 2 am)
 pub fn style_window_as_wallpaper(hwnd: HWND) {
-    let result = unsafe {
-        SetWindowPos(
-            hwnd,
-            HWND_BOTTOM,
-            0,
-            0,
-            1920,
-            1080,
-            SWP_FRAMECHANGED | SWP_NOACTIVATE,
-        )
-    };
-    if result == 0 {
-        eprintln!("Failed setting window as always on bottom");
-    }
-
     let progman_hwnd = unsafe { FindWindowA(c"Progman".as_ptr().cast(), std::ptr::null()) };
     if progman_hwnd as usize == 0 {
         eprintln!("Couldn't find Program Manager window");
