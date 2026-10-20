@@ -139,51 +139,30 @@ const RESTART: usize = 2;
 const ZOOM_PLUS: usize = 3;
 const ZOOM_MINUS: usize = 4;
 
-const ALIGN_TOP: usize = 5;
-const ALIGN_MIDDLE: usize = 6;
-const ALIGN_BOTTOM: usize = 7;
+const ALIGN_OFFSET: usize = 50;
 
 fn create_vertical_align_submenu(active_vertical_align: VerticalAlign) -> HMENU {
     let vertical_align_submenu = unsafe { CreatePopupMenu() };
-    unsafe {
-        AppendMenuA(
-            vertical_align_submenu,
-            MF_STRING
-                | if matches!(active_vertical_align, VerticalAlign::Top) {
-                    MF_CHECKED
-                } else {
-                    0
-                },
-            ALIGN_TOP,
-            c"Top".as_ptr(),
-        )
-    };
-    unsafe {
-        AppendMenuA(
-            vertical_align_submenu,
-            MF_STRING
-                | if matches!(active_vertical_align, VerticalAlign::Middle) {
-                    MF_CHECKED
-                } else {
-                    0
-                },
-            ALIGN_MIDDLE,
-            c"Middle".as_ptr(),
-        )
-    };
-    unsafe {
-        AppendMenuA(
-            vertical_align_submenu,
-            MF_STRING
-                | if matches!(active_vertical_align, VerticalAlign::Bottom) {
-                    MF_CHECKED
-                } else {
-                    0
-                },
-            ALIGN_BOTTOM,
-            c"Bottom".as_ptr(),
-        )
-    };
+
+    for (text, ty) in [
+        (c"Top", VerticalAlign::Top),
+        (c"Middle", VerticalAlign::Middle),
+        (c"Bottom", VerticalAlign::Bottom),
+    ] {
+        unsafe {
+            AppendMenuA(
+                vertical_align_submenu,
+                MF_STRING
+                    | if active_vertical_align == ty {
+                        MF_CHECKED
+                    } else {
+                        0
+                    },
+                ALIGN_OFFSET + ty as usize,
+                text.as_ptr(),
+            )
+        };
+    }
     vertical_align_submenu
 }
 
@@ -277,6 +256,9 @@ pub fn show_context_menu(
             let amt = if cmd as usize == ZOOM_PLUS { 20 } else { -20 };
             zoom_level += amt;
             println!("zoom{zoom_level}");
+        }
+        ALIGN_OFFSET.. => {
+            println!("align{}", cmd as usize - ALIGN_OFFSET);
         }
         _ => {}
     }

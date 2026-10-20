@@ -6,7 +6,7 @@ pub struct WallpaperOptions {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum VerticalAlign {
     Top,
     Middle,
