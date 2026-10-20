@@ -67,6 +67,7 @@ pub fn window_conf() -> Conf {
         window_title: "my cool canvascycler :3".to_string(),
         window_width: 640,
         window_height: 480,
+        high_dpi: true,
         ..Default::default()
     }
 }
