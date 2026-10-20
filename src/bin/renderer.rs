@@ -147,6 +147,17 @@ fn load_new_image(image_data: &mut [u8], data: &CanvasCycleImage) -> ChangingPix
     changing_pixels
 }
 
+fn get_name(path: &Path) -> String {
+    let name = path
+        .file_name()
+        .map(|a| a.to_string_lossy().to_string())
+        .unwrap_or_default();
+    name.split_once(".")
+        .map(|a| a.0)
+        .unwrap_or_default()
+        .to_string()
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut args = std::env::args().skip(1);
@@ -158,6 +169,8 @@ async fn main() {
     };
     let stdin_rx = start_stdin_channel();
     let mut data = read_image_data(&path);
+
+    let mut active_name = get_name(&path) + "\x00";
 
     #[allow(unused_variables)]
     let wallpaper = args
@@ -191,14 +204,9 @@ async fn main() {
             if item.file_type().unwrap().is_dir() {
                 continue;
             }
-            let name = item.file_name();
-            let name = name.to_string_lossy();
-            let Some((name, _ext)) = name.split_once(".") else {
-                continue;
-            };
-            let mut name = name.to_string();
-            name.push('\x00');
-            entries.push((name, item.path()));
+            let path = item.path();
+            let name = get_name(&path) + "\x00";
+            entries.push((name, path));
         }
         entries
     } else {
@@ -248,7 +256,7 @@ async fn main() {
                 let x: u32 = mouse.x.to_bits();
                 let _y: u32 = mouse.y.to_bits();
                 if x == 3148524160 || x == 3137898496 {
-                    windows::show_context_menu(hwnd, &image_list, zoom_level);
+                    windows::show_context_menu(hwnd, &image_list, &active_name, zoom_level);
                 } else if [1001040512, 3137898496, 3142372608, 990414848, 3205007497].contains(&x) {
                     // known but unhandled message ids
                 } else {
@@ -258,7 +266,7 @@ async fn main() {
             }
         }
 
-        // check stdin
+        // check stdin for new messages
         if let Ok(value) = stdin_rx.try_recv() {
             match value.trim() {
                 "exit" => {
@@ -275,6 +283,7 @@ async fn main() {
                     data = read_image_data(&PathBuf::from(new_file));
                     changing_pixels = load_new_image(&mut image.bytes, &data);
                     texture.update(&image);
+                    active_name = get_name(&PathBuf::from(new_file)) + "\x00";
                 }
                 _ => {
                     eprintln!("Unknown command.")

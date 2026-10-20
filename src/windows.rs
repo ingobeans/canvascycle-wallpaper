@@ -11,7 +11,7 @@ use winapi::{
             AppendMenuA, AppendMenuW, CreateIconFromResourceEx, CreatePopupMenu,
             EnumDisplayMonitors, FindWindowA, FindWindowExA, GWL_EXSTYLE, GWL_STYLE, GetCursorPos,
             GetWindowLongPtrW, HWND_BOTTOM, LR_DEFAULTCOLOR, LookupIconIdFromDirectoryEx,
-            MF_DISABLED, MF_POPUP, MF_SEPARATOR, MF_STRING, SW_SHOW, SWP_FRAMECHANGED,
+            MF_CHECKED, MF_DISABLED, MF_POPUP, MF_SEPARATOR, MF_STRING, SW_SHOW, SWP_FRAMECHANGED,
             SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SendMessageA, SetForegroundWindow, SetParent,
             SetWindowLongPtrW, SetWindowPos, ShowWindow, TPM_NONOTIFY, TPM_RETURNCMD,
             TrackPopupMenu, WM_MOUSEMOVE, WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED,
@@ -133,7 +133,12 @@ pub fn get_monitors() -> Vec<RECT> {
     rects
 }
 
-pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)], mut zoom_level: i16) {
+pub fn show_context_menu(
+    hwnd: HWND,
+    items: &[(String, PathBuf)],
+    active_name: &str,
+    mut zoom_level: i16,
+) {
     let mut cursor_pos = POINT { x: 0, y: 0 };
     unsafe { GetCursorPos(&mut cursor_pos) };
 
@@ -146,10 +151,15 @@ pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)], mut zoom_level
     let submenu = unsafe { CreatePopupMenu() };
     for (index, (name, _)) in items.iter().enumerate() {
         let utf16: Vec<u16> = name.encode_utf16().collect();
+        let active = name == active_name;
         unsafe {
             AppendMenuW(
                 submenu,
-                MF_STRING,
+                if active {
+                    MF_STRING | MF_CHECKED
+                } else {
+                    MF_STRING
+                },
                 CHANGE_WALLPAPER_OFFSET + index,
                 utf16.as_ptr() as _,
             )
