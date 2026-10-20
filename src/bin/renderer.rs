@@ -1,24 +1,19 @@
-#![cfg_attr(
-    all(target_os = "windows", not(debug_assertions),),
-    windows_subsystem = "windows"
-)]
-
 use std::{
     collections::{HashMap, hash_map::Entry},
     hash::Hash,
 };
 
+use crate::utils::WallpaperOptions;
 use macroquad::{miniquad::window::screen_size, prelude::*};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use utils::*;
-
-#[cfg(windows)]
-#[path = "../windows.rs"]
-pub mod windows;
 
 #[path = "../utils.rs"]
 pub mod utils;
+
+#[cfg(windows)]
+#[path = "../windows.rs"]
+mod windows;
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 struct PixelRgb {
@@ -85,7 +80,6 @@ pub fn parse_file_data(text: &str) -> CanvasCycleImage {
     data.unwrap()
 }
 
-#[allow(dead_code)]
 fn main() {
     let mut args = std::env::args().skip(1);
     let arg = args.next();
@@ -132,7 +126,6 @@ pub async fn show(data: CanvasCycleImage, as_wallpaper: Option<WallpaperOptions>
         if let Some(wallpaper) = as_wallpaper
             && let Some(hwnd) = windows::find_miniquad_window()
         {
-            println!("hwnd found!");
             windows::style_window_as_wallpaper(hwnd, wallpaper);
         }
     }

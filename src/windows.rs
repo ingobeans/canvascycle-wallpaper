@@ -1,3 +1,4 @@
+#![expect(dead_code)]
 use winapi::{
     DEFINE_GUID,
     shared::windef::{HDC, HMONITOR, HWND, LPRECT, RECT},
@@ -101,20 +102,11 @@ pub fn set_tray(hwnd: HWND) {
 
 pub fn get_monitors() -> Vec<RECT> {
     unsafe extern "system" fn enum_callback(
-        hmon: HMONITOR,
+        _hmon: HMONITOR,
         _hdc: HDC,
         rect: LPRECT,
         param: isize,
     ) -> i32 {
-        unsafe {
-            println!(
-                "monitor found: hmon:{hmon:?}, rect:({},{}),({},{})",
-                (*rect).left,
-                (*rect).right,
-                (*rect).top,
-                (*rect).bottom
-            );
-        }
         let rects: *mut Vec<RECT> = param as _;
         unsafe {
             (*rects).push(*rect);
@@ -241,7 +233,6 @@ pub fn style_window_as_wallpaper(hwnd: HWND, wallpaper: WallpaperOptions) {
             SWP_FRAMECHANGED | SWP_NOACTIVATE,
         ) == 0
     };
-    println!("{width}x{height}");
     if result {
         eprintln!("SetWindowPos failed");
         return;

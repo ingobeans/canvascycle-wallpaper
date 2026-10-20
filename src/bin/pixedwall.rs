@@ -1,38 +1,47 @@
-use crate::renderer::utils::WallpaperOptions;
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions),),
+    windows_subsystem = "windows"
+)]
+use std::{path::PathBuf, time::Duration};
 
-mod renderer;
+#[path = "../utils.rs"]
+pub mod utils;
+
+#[path = "../windows.rs"]
+mod windows;
+
 fn main() {
     let mut args = std::env::args().skip(1);
     let arg = args.next();
-    let text = if let Some(arg) = arg {
-        std::fs::read_to_string(arg.as_str())
+    let mut path = if let Some(arg) = arg {
+        PathBuf::from(arg)
     } else {
-        std::fs::read_to_string("data/images/TESTRAMP.LBM.json")
+        PathBuf::from("data/images/TESTRAMP.LBM.json")
     };
-    let text = text.unwrap();
-    let data = renderer::parse_file_data(&text);
 
-    let monitors = renderer::windows::get_monitors();
+    let exe_path = std::env::current_exe().unwrap();
+    let parent = exe_path.parent().unwrap();
+    let renderer = parent.join("renderer.exe");
+    if !path.exists() && parent.join(&path).exists() {
+        path = parent.join(path);
+    }
+
+    let monitors = windows::get_monitors();
+    println!("{} monitors found.", monitors.len());
 
     let mut handles = Vec::new();
-    for monitor in monitors {
-        let wallpaper = Some(WallpaperOptions {
-            left: monitor.left,
-            top: monitor.top,
-            right: monitor.right,
-            bottom: monitor.bottom,
-        });
-
-        let data_clone = data.clone();
-        let handle = std::thread::spawn(move || {
-            macroquad::Window::from_config(
-                renderer::window_conf(),
-                renderer::show(data_clone, wallpaper),
-            );
-        });
+    for i in 0..monitors.len() {
+        let handle = std::process::Command::new(&renderer)
+            .arg(&path)
+            .arg("-w")
+            .arg(i.to_string())
+            .spawn()
+            .unwrap();
         handles.push(handle);
+        std::thread::sleep(Duration::from_millis(100));
     }
-    for handle in handles {
-        handle.join().unwrap();
+    println!("Wallpapers loaded!");
+    for mut handle in handles {
+        handle.wait().unwrap();
     }
 }
