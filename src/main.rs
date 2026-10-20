@@ -36,7 +36,7 @@ impl PixelRgb {
 }
 #[derive(Serialize, Deserialize)]
 struct Cycle {
-    reverse: u8, // dont know how this property works
+    reverse: u8,
     rate: u16,
     low: u8,
     high: u8,
@@ -162,10 +162,18 @@ async fn main() {
             let cycle_offset = ((time / interval_rate_time).floor() % cycle_length as f64) as u8;
             let transition_amt = (time - last_time) / interval_rate_time;
 
-            let offset = cycle_length - changing_pixel.offset + cycle_offset;
+            let offset = if cycle.reverse == 0 {
+                cycle_length - changing_pixel.offset + cycle_offset
+            } else {
+                changing_pixel.offset + cycle_offset
+            };
 
-            let offset_clamped = cycle_length - offset % cycle_length;
-            let next_offset_clamped = cycle_length - (offset + 1) % cycle_length;
+            let mut offset_clamped = offset % cycle_length;
+            let mut next_offset_clamped = (offset + 1) % cycle_length;
+            if cycle.reverse == 0 {
+                offset_clamped = cycle_length - offset_clamped;
+                next_offset_clamped = cycle_length - next_offset_clamped;
+            }
 
             let color_index = cycle.low + offset_clamped;
             let color = &data.colors[color_index as usize];
