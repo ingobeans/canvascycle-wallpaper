@@ -108,7 +108,7 @@ async fn main() {
     'pixel_loop: for (pixel_index, pixel) in data.pixels.iter().enumerate() {
         for (cycle_index, cycle) in data.cycles.iter().enumerate() {
             if *pixel >= cycle.low && *pixel <= cycle.high {
-                if cycle.high == cycle.low {
+                if cycle.high == cycle.low || cycle.rate == 0 {
                     continue;
                 }
                 let offset = *pixel - cycle.low;
@@ -157,29 +157,23 @@ async fn main() {
             let cycle = &data.cycles[changing_pixel.cycle_index as usize];
             let cycle_length = cycle.high - cycle.low;
 
-            let mixed_color;
-            if cycle.rate != 0 {
-                let interval_rate_time = interval_time / (cycle.rate as f64 / 2500.0);
-                let last_time = interval_rate_time * (time / interval_rate_time).floor();
-                let cycle_offset =
-                    ((time / interval_rate_time).floor() % cycle_length as f64) as u8;
-                let transition_amt = (time - last_time) / interval_rate_time;
+            let interval_rate_time = interval_time / (cycle.rate as f64 / 2500.0);
+            let last_time = interval_rate_time * (time / interval_rate_time).floor();
+            let cycle_offset = ((time / interval_rate_time).floor() % cycle_length as f64) as u8;
+            let transition_amt = (time - last_time) / interval_rate_time;
 
-                let offset = cycle_length - changing_pixel.offset + cycle_offset;
+            let offset = cycle_length - changing_pixel.offset + cycle_offset;
 
-                let offset_clamped = cycle_length - offset % cycle_length;
-                let next_offset_clamped = cycle_length - (offset + 1) % cycle_length;
+            let offset_clamped = cycle_length - offset % cycle_length;
+            let next_offset_clamped = cycle_length - (offset + 1) % cycle_length;
 
-                let color_index = cycle.low + offset_clamped;
-                let color = &data.colors[color_index as usize];
+            let color_index = cycle.low + offset_clamped;
+            let color = &data.colors[color_index as usize];
 
-                let next_color_index = cycle.low + next_offset_clamped;
-                let next_color = &data.colors[next_color_index as usize];
+            let next_color_index = cycle.low + next_offset_clamped;
+            let next_color = &data.colors[next_color_index as usize];
 
-                mixed_color = PixelRgb::mix(color, next_color, transition_amt);
-            } else {
-                mixed_color = data.colors[(changing_pixel.offset + cycle.low) as usize];
-            }
+            let mixed_color = PixelRgb::mix(color, next_color, transition_amt);
 
             #[expect(clippy::identity_op)]
             for pixel_index in indices {
