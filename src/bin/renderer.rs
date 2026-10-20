@@ -100,16 +100,15 @@ fn start_stdin_channel() -> Receiver<String> {
 }
 
 fn read_image_data(path: &Path) -> CanvasCycleImage {
-    let text = std::fs::read_to_string(&path);
+    let text = std::fs::read_to_string(path);
 
     let text = text.unwrap();
-    let data = parse_file_data(&text);
-    data
+    parse_file_data(&text)
 }
 
 type ChangingPixels = HashMap<ChangingPixel, Vec<usize>>;
 
-fn load_new_image(image_data: &mut Vec<u8>, data: &CanvasCycleImage) -> ChangingPixels {
+fn load_new_image(image_data: &mut [u8], data: &CanvasCycleImage) -> ChangingPixels {
     // group all pixels that need to same with the same color together
     let mut changing_pixels: ChangingPixels = HashMap::new();
     'pixel_loop: for (pixel_index, pixel) in data.pixels.iter().enumerate() {
@@ -136,6 +135,7 @@ fn load_new_image(image_data: &mut Vec<u8>, data: &CanvasCycleImage) -> Changing
         }
     }
 
+    #[allow(clippy::identity_op)]
     for (index, pixel) in data.pixels.iter().enumerate() {
         let c = &data.colors[*pixel as usize];
         image_data[index * 4 + 0] = c.r;

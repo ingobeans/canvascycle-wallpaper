@@ -141,7 +141,7 @@ pub fn show_context_menu(hwnd: HWND, items: &[(String, PathBuf)]) {
     const CHANGE_WALLPAPER_OFFSET: usize = 100;
 
     let submenu = unsafe { CreatePopupMenu() };
-    for (index, (name, path)) in items.iter().enumerate() {
+    for (index, (name, _)) in items.iter().enumerate() {
         let utf16: Vec<u16> = name.encode_utf16().collect();
         unsafe {
             AppendMenuW(
