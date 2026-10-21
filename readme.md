@@ -32,6 +32,15 @@ this project depends on a [fork i made of macroquad](https://github.com/ingobean
 
 * which in turn depends on a [fork i made of miniquad](https://github.com/ingobeans/miniquad/tree/exposed-windows)
 
+i had to create these forks since i was using these rendering libraries, though given all the low level APIs i was working with, i needed to expose more information and handle more input events.
+
+the changes i made were:
+* added function to get window handle (HWND)
+* added handling of a user defined tray icon event message
+* added function for fetching tray event
+
+the artworks which are bundled with the release were scraped from the effectgames demo with [this tool i made](https://github.com/ingobeans/canvascycle-archive).
+
 ## cross platform?
 
 the wallpaper engine system (the `pixedwall` binary) is exclusive to windows since it directly uses low level windows api for the entire functionality.
