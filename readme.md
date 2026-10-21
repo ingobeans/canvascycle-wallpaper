@@ -13,17 +13,22 @@ https://github.com/user-attachments/assets/70643187-5dea-4d3c-b3c9-159a41e90e53
 
 so the final state of the project is primarily a animated wallpaper engine for Windows, which uses these pixel art artworks. 
 
-the project is however split in two binaries, the `pixedwall` binary is the actual wallpaper engine, while `renderer` just renders an 
+the project is however split in two binaries, the `pixedwall` binary is the actual wallpaper engine, while `renderer` just renders a single image in a window
 
-## features
+## technical features
 
 * render animated pixel artworks from the .lbm.json format
+  * color cycling
+  * also implements interframe blending for smoother animations
+  * heavily optimized
 * wallpaper engine used to display these artworks
-  * wallpaper engine written from scratch with low level windows api calls
-  * customize looks and active wallpaper from tray icon menu (also from scratch with windows api)
+  * written from scratch with low level windows api calls
+  * customize looks and active wallpaper from tray icon menu (also written from scratch with windows api)
   * multi monitor support
-  * 
-
+    * fetches information about all monitors on startup
+    * each monitor gets its own process, plus one additional manager process
+       * system for orchestrating these different child processes and handling communication
+  
 
 
 ## about dependencies
@@ -31,6 +36,15 @@ the project is however split in two binaries, the `pixedwall` binary is the actu
 this project depends on a [fork i made of macroquad](https://github.com/ingobeans/macroquad/tree/exposed-windows),
 
 * which in turn depends on a [fork i made of miniquad](https://github.com/ingobeans/miniquad/tree/exposed-windows)
+
+i had to create these forks since i was using these rendering libraries, though given all the low level APIs i was working with, i needed to expose more information and handle more input events.
+
+the changes i made were:
+* added function to get window handle (HWND)
+* added handling of a user defined tray icon event message
+* added function for fetching tray event
+
+the artworks which are bundled with the release were scraped from the effectgames demo with [this tool i made](https://github.com/ingobeans/canvascycle-archive).
 
 ## cross platform?
 
