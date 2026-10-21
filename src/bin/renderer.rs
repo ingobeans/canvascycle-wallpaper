@@ -352,13 +352,10 @@ async fn main() {
 
         #[allow(unused_mut)]
         let (mut width, mut height) = screen_size();
-        #[cfg(not(windows))]
-        {
-            // windows handles scaling differently so this isnt needed
-            let scale = screen_dpi_scale();
-            width /= scale;
-            height /= scale;
-        }
+
+        let scale = screen_dpi_scale();
+        width /= scale;
+        height /= scale;
 
         let mut scale_factor = (width / data.width as f32).min(height / data.height as f32);
         scale_factor *= zoom_level as f32 / 100.0;
