@@ -4,7 +4,7 @@ hi! i totally adore effectgames' [canvascycle demo](https://www.effectgames.com/
 
 <img src="https://cdn.hackclub.com/01a15e73-6011-73aa-b62f-b2375f19f73f/Screenshot_20261021_143241.png" width=250>
 
-these artworks use a custom fileformat and this project originally started as a rust implementation of that renderer and parser, but then i also added support for using these animated images as your desktop wallpaper (Windows only):
+these artworks use a custom fileformat and animation technique (read more about this [here](https://www.effectgames.com/effect/article-Old_School_Color_Cycling_with_HTML5.html)) and this project originally started as a rust implementation of that renderer and parser, but then i also added support for using these animated images as your desktop wallpaper (Windows only):
 
 
 https://github.com/user-attachments/assets/70643187-5dea-4d3c-b3c9-159a41e90e53
@@ -14,6 +14,16 @@ https://github.com/user-attachments/assets/70643187-5dea-4d3c-b3c9-159a41e90e53
 so the final state of the project is primarily a animated wallpaper engine for Windows, which uses these pixel art artworks. 
 
 the project is however split in two binaries, the `pixedwall` binary is the actual wallpaper engine, while `renderer` just renders an 
+
+## features
+
+* render animated pixel artworks from the .lbm.json format
+* wallpaper engine used to display these artworks
+  * wallpaper engine written from scratch with low level windows api calls
+  * customize looks and active wallpaper from tray icon menu (also from scratch with windows api)
+  * multi monitor support
+  * 
+
 
 
 ## about dependencies
@@ -41,6 +51,9 @@ open your system tray to see the pixedwall icon. click it, and you can configure
 you can also exit and restart the program from here.
 
 <img width="330" alt="image" src="https://github.com/user-attachments/assets/96fc0817-4c57-4684-ad03-e0fc19fdb306" />
+
+<img width="269" height="204" alt="image" src="https://github.com/user-attachments/assets/a6ceb41c-006f-432f-9ec1-5e23eff8227d" />
+
 
 ## troubleshooting
 
