@@ -256,7 +256,7 @@ pub fn show_context_menu(
             println!("change-wallpaper{path}");
         }
         ZOOM_PLUS | ZOOM_MINUS => {
-            let amt = if cmd as usize == ZOOM_PLUS { 20 } else { -20 };
+            let amt = if cmd as usize == ZOOM_PLUS { 10 } else { -10 };
             zoom_level += amt;
             println!("zoom{zoom_level}");
         }
