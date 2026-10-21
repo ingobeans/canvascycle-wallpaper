@@ -18,12 +18,14 @@ the project is however split in two binaries, the `pixedwall` binary is the actu
 ## features
 
 * render animated pixel artworks from the .lbm.json format
+  * color cycling
+  * also implements interframe blending for smoother animations
+  * heavily optimized
 * wallpaper engine used to display these artworks
-  * wallpaper engine written from scratch with low level windows api calls
+  * written from scratch with low level windows api calls
   * customize looks and active wallpaper from tray icon menu (also from scratch with windows api)
   * multi monitor support
-  * 
-
+  
 
 
 ## about dependencies
