@@ -15,7 +15,7 @@ so the final state of the project is primarily a animated wallpaper engine for W
 
 the project is however split in two binaries, the `pixedwall` binary is the actual wallpaper engine, while `renderer` just renders an 
 
-## features
+## technical features
 
 * render animated pixel artworks from the .lbm.json format
   * color cycling
@@ -23,8 +23,11 @@ the project is however split in two binaries, the `pixedwall` binary is the actu
   * heavily optimized
 * wallpaper engine used to display these artworks
   * written from scratch with low level windows api calls
-  * customize looks and active wallpaper from tray icon menu (also from scratch with windows api)
+  * customize looks and active wallpaper from tray icon menu (also written from scratch with windows api)
   * multi monitor support
+    * fetches information about all monitors on startup
+    * each monitor gets its own process, plus one additional manager process
+       * system for orchestrating these different child processes and handling communication
   
 
 
