@@ -171,6 +171,7 @@ async fn main() {
     let stdin_rx = start_stdin_channel();
     let mut data = read_image_data(&path);
 
+    #[allow(unused)]
     let mut active_name = get_name(&path) + "\x00";
 
     #[allow(unused_variables)]
@@ -277,6 +278,7 @@ async fn main() {
         }
 
         // check stdin for new messages
+        #[allow(unused)]
         if let Ok(value) = stdin_rx.try_recv() {
             match value.trim() {
                 "exit" => {
