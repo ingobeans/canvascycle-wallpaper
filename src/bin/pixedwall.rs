@@ -1,12 +1,11 @@
-#![cfg_attr(
-    all(target_os = "windows", not(debug_assertions),),
-    windows_subsystem = "windows"
-)]
 use std::{
     io::{Read, Write},
     path::PathBuf,
     process::Stdio,
 };
+use std::ptr;
+use winapi::um::wincon::GetConsoleWindow;
+use winapi::um::winuser::{ShowWindow, SW_HIDE};
 
 #[path = "../utils.rs"]
 pub mod utils;
@@ -14,21 +13,53 @@ pub mod utils;
 #[path = "../windows.rs"]
 mod windows;
 
+fn hide_console_window() {
+
+    let window = unsafe {GetConsoleWindow()};
+    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
+    if window != ptr::null_mut() {
+        unsafe {
+            ShowWindow(window, SW_HIDE);
+        }
+    }
+}
+
 fn main() {
+    hide_console_window();
     let mut args = std::env::args().skip(1);
     let arg = args.next();
-    let mut path = if let Some(arg) = arg {
-        PathBuf::from(arg)
-    } else {
-        PathBuf::from("data/images/TESTRAMP.LBM.json")
-    };
 
     let exe_path = std::env::current_exe().unwrap();
     let parent = exe_path.parent().unwrap();
     let renderer = parent.join("renderer.exe");
-    if !path.exists() && parent.join(&path).exists() {
-        path = parent.join(path);
-    }
+
+    let path = if let Some(arg) = arg {
+        let mut path = PathBuf::from(arg);
+
+        if !path.exists() && parent.join(&path).exists() {
+            path = parent.join(path);
+        }
+        path
+    } else {
+        let mut data_path = PathBuf::from("data/images/");
+        if !data_path.exists() && parent.join(&data_path).exists() {
+            data_path = parent.join(data_path);
+        }
+        if !data_path.exists() {
+            eprintln!("Error: no data/images/ directory found in exe dir!");
+            return;
+        }
+        let a = 'item: {
+            for item in std::fs::read_dir(data_path).unwrap().flatten() {
+                if item.file_type().unwrap().is_file() {
+                    break 'item item.path();
+                }
+            }
+            eprintln!("Error: data/images/ directory is empty!");
+            return;
+        };
+        a
+    };
 
     let monitors = windows::get_monitors();
     println!("{} monitors found.", monitors.len());
