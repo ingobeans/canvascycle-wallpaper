@@ -24,8 +24,7 @@ fn hide_console_window() {
     }
 }
 
-fn main() {
-    hide_console_window();
+fn run()->bool {
     let mut args = std::env::args().skip(1);
     let arg = args.next();
 
@@ -47,7 +46,7 @@ fn main() {
         }
         if !data_path.exists() {
             eprintln!("Error: no data/images/ directory found in exe dir!");
-            return;
+            return false;
         }
         let a = 'item: {
             for item in std::fs::read_dir(data_path).unwrap().flatten() {
@@ -56,7 +55,7 @@ fn main() {
                 }
             }
             eprintln!("Error: data/images/ directory is empty!");
-            return;
+            return false;
         };
         a
     };
@@ -99,6 +98,7 @@ fn main() {
     println!("Wallpapers loaded!");
 
     let mut primary_stdout = primary.stdout.take().unwrap();
+    let mut last_message = Vec::new();
     let mut current_message = Vec::new();
     let mut buf = [0];
     loop {
@@ -117,6 +117,7 @@ fn main() {
                 stdin.write_all(b"\n").unwrap();
             }
 
+            last_message = current_message.clone();
             current_message.clear();
         } else {
             current_message.push(buf[0]);
@@ -125,5 +126,17 @@ fn main() {
 
     for mut handle in seconday_handles {
         let _ = handle.wait();
+    }
+    last_message == b"restart"
+}
+
+fn main() {
+    hide_console_window();
+    loop {
+        let restart = run();
+        if !restart {
+            break;
+        }
+        println!("Restarting...");
     }
 }

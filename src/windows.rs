@@ -247,6 +247,9 @@ pub fn show_context_menu(
         EXIT => {
             println!("exit");
         }
+        RESTART => {
+            println!("restart");
+        }
         CHANGE_WALLPAPER_OFFSET.. => {
             let index = cmd as usize - CHANGE_WALLPAPER_OFFSET;
             let path = items[index].1.to_string_lossy();

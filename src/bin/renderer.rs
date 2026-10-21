@@ -277,7 +277,7 @@ async fn main() {
         #[allow(unused)]
         if let Ok(value) = stdin_rx.try_recv() {
             match value.trim() {
-                "exit" => {
+                "exit" | "restart" => {
                     break;
                 }
                 s if s.starts_with("zoom") => {
