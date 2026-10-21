@@ -13,7 +13,7 @@ https://github.com/user-attachments/assets/70643187-5dea-4d3c-b3c9-159a41e90e53
 
 so the final state of the project is primarily a animated wallpaper engine for Windows, which uses these pixel art artworks. 
 
-the project is however split in two binaries, the `pixedwall` binary is the actual wallpaper engine, while `renderer` just renders an 
+the project is however split in two binaries, the `pixedwall` binary is the actual wallpaper engine, while `renderer` just renders a single image in a window
 
 ## technical features
 
