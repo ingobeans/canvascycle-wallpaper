@@ -1,11 +1,12 @@
+#![cfg_attr(
+    all(target_os = "windows", not(debug_assertions)),
+    windows_subsystem = "windows"
+)]
 use std::{
     io::{Read, Write},
     path::PathBuf,
     process::Stdio,
 };
-use std::ptr;
-use winapi::um::wincon::GetConsoleWindow;
-use winapi::um::winuser::{ShowWindow, SW_HIDE};
 
 #[path = "../utils.rs"]
 pub mod utils;
@@ -13,18 +14,7 @@ pub mod utils;
 #[path = "../windows.rs"]
 mod windows;
 
-fn hide_console_window() {
-
-    let window = unsafe {GetConsoleWindow()};
-    // https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-showwindow
-    if window != ptr::null_mut() {
-        unsafe {
-            ShowWindow(window, SW_HIDE);
-        }
-    }
-}
-
-fn run()->bool {
+fn run() -> bool {
     let mut args = std::env::args().skip(1);
     let arg = args.next();
 
@@ -81,6 +71,15 @@ fn run()->bool {
             .arg(i.to_string())
             .stdin(Stdio::piped());
 
+        #[cfg(not(debug_assertions))]
+        {
+            use std::os::windows::process::CommandExt;
+
+            use winapi::um::winbase::CREATE_NO_WINDOW;
+
+            handle = handle.creation_flags(CREATE_NO_WINDOW);
+        }
+
         if i == 0 {
             handle = handle.arg("--tray").stdout(Stdio::piped());
         }
@@ -131,7 +130,11 @@ fn run()->bool {
 }
 
 fn main() {
-    hide_console_window();
+    #[cfg(not(debug_assertions))]
+    unsafe {
+        use winapi::um::wincon::{ATTACH_PARENT_PROCESS, AttachConsole};
+        AttachConsole(ATTACH_PARENT_PROCESS);
+    }
     loop {
         let restart = run();
         if !restart {
