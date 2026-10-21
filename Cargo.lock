@@ -61,7 +61,7 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "canvascycle-wallpaper"
-version = "0.4.13"
+version = "0.4.14"
 dependencies = [
  "image",
  "macroquad",
@@ -94,9 +94,9 @@ dependencies = [
 
 [[package]]
 name = "crc32fast"
-version = "1.5.2"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01a7799fd6b852db0e61728dde9a204c423b44d689dbd432522543614b490e78"
+checksum = "0ba106e844045ddc02c20768ac4b0b7cb45f2cc2ecbd833ac9f5dacb183c2055"
 dependencies = [
  "cfg-if",
 ]
@@ -288,8 +288,8 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "macroquad"
-version = "0.4.17"
-source = "git+https://github.com/ingobeans/macroquad.git?branch=exposed-windows#aa8152215ffaf1e7bf7ed1a0081cacd0d493ec17"
+version = "0.4.18"
+source = "git+https://github.com/ingobeans/macroquad.git?branch=exposed-windows#3185350fa275dd435372a6cf0cb4dbf149fff86b"
 dependencies = [
  "fontdue",
  "glam",
@@ -302,7 +302,7 @@ dependencies = [
 [[package]]
 name = "macroquad_macro"
 version = "0.1.8"
-source = "git+https://github.com/ingobeans/macroquad.git?branch=exposed-windows#aa8152215ffaf1e7bf7ed1a0081cacd0d493ec17"
+source = "git+https://github.com/ingobeans/macroquad.git?branch=exposed-windows#3185350fa275dd435372a6cf0cb4dbf149fff86b"
 
 [[package]]
 name = "malloc_buf"
@@ -322,7 +322,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 [[package]]
 name = "miniquad"
 version = "0.4.12"
-source = "git+https://github.com/ingobeans/miniquad?branch=exposed-windows#7d752c0f018ebf7f96898a6f08e289ec88c8684a"
+source = "git+https://github.com/ingobeans/miniquad?branch=exposed-windows#652b5d6c405c71048be09a6d213eda572b3a484c"
 dependencies = [
  "libc",
  "ndk-sys",

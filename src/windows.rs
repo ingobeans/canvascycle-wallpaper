@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use std::path::PathBuf;
 
+use macroquad::miniquad::native::windows::WM_USER_TRAY_EVENT;
 use winapi::{
     DEFINE_GUID,
     shared::windef::{HDC, HMENU, HMONITOR, HWND, LPRECT, POINT, RECT},
@@ -14,9 +15,8 @@ use winapi::{
             MF_CHECKED, MF_DISABLED, MF_POPUP, MF_SEPARATOR, MF_STRING, SW_SHOW, SWP_FRAMECHANGED,
             SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SendMessageA, SetForegroundWindow, SetParent,
             SetWindowLongPtrW, SetWindowPos, ShowWindow, TPM_NONOTIFY, TPM_RETURNCMD,
-            TrackPopupMenu, WM_MOUSEMOVE, WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED,
-            WS_EX_NOACTIVATE, WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME,
-            WS_VISIBLE,
+            TrackPopupMenu, WS_BORDER, WS_CAPTION, WS_CHILD, WS_EX_LAYERED, WS_EX_NOACTIVATE,
+            WS_MAXIMIZEBOX, WS_MINIMIZEBOX, WS_POPUP, WS_SYSMENU, WS_THICKFRAME, WS_VISIBLE,
         },
     },
 };
@@ -88,7 +88,7 @@ pub fn set_tray(hwnd: HWND) {
         cbSize: size_of::<NOTIFYICONDATAA>() as _,
         hWnd: hwnd,
         dwInfoFlags: 0,
-        uCallbackMessage: WM_MOUSEMOVE,
+        uCallbackMessage: WM_USER_TRAY_EVENT,
         hIcon: icon,
         dwState: 0,
         dwStateMask: 0,

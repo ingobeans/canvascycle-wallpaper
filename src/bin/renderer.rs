@@ -256,11 +256,12 @@ async fn main() {
     loop {
         #[cfg(windows)]
         if as_wallpaper.is_some() {
-            let mouse = mouse_delta_position();
-            if mouse != Vec2::ZERO {
-                let x: u32 = mouse.x.to_bits();
-                let _y: u32 = mouse.y.to_bits();
-                if x == 3148524160 || x == 3137898496 {
+            let event = get_tray_icon_events();
+            if event != 0 {
+                use winapi::um::winuser::{WM_LBUTTONUP, WM_RBUTTONUP};
+                let event = event as u32;
+
+                if event == WM_RBUTTONUP || event == WM_LBUTTONUP {
                     windows::show_context_menu(
                         hwnd,
                         &image_list,
@@ -268,11 +269,6 @@ async fn main() {
                         y_align,
                         zoom_level,
                     );
-                } else if [1001040512, 3137898496, 3142372608, 990414848, 3205007497].contains(&x) {
-                    // known but unhandled message ids
-                } else {
-                    // unknown message ids
-                    // println!("unknown message id received: {x},{y}");
                 }
             }
         }
